@@ -5,17 +5,19 @@ Functions
 create_email_message
     Creates an email message object.
 draft
-    Creates a draft email.
+    Creates a draft email using an email message object.
 send
-    Sends an email.
+    Sends an email using an email message object.
 load_html
     Loads an html file and returns its contents.
 localhost_send
     Sends a sample email to localhost.
 """
+# TODO: embedding images does not work for drafts.
 
 
 import os
+import re
 import time
 import ssl
 import smtplib
@@ -37,12 +39,10 @@ def sample_use() -> None:
     bcc_addresses = []
     subject = 'This is a sample email'
     plaintext_content = 'This is the plaintext content of the email.'
-    embedded_image_paths = ['sun 1024.jpg']
-    image_ids: list[str] = create_image_ids(len(embedded_image_paths))
-    html_content = dedent(f'''\
+    html_content = dedent('''\
         <h1>This is an email written with HTML</h1>
-        <p>There should be one image embedded below and one image attached.</p>
-        <img src='cid:{image_ids[0][1:-1]}' />
+        <p>There should be one image embedded and one attached.</p>
+        <img src='sun 1024.jpg' />
         ''')
     attachment_paths = ['nebula 2 under 1 MB.jpg']
 
@@ -51,8 +51,6 @@ def sample_use() -> None:
                                plaintext_content=plaintext_content,
                                html_content=html_content,
                                attachment_paths=attachment_paths,
-                               embedded_image_paths=embedded_image_paths,
-                               image_ids=image_ids,
                                to_addresses=to_addresses,
                                cc_addresses=cc_addresses,
                                bcc_addresses=bcc_addresses)
@@ -65,7 +63,7 @@ def sample_use() -> None:
     #      email_app_password=email_password)
 
 
-def create_image_ids(num: int) -> list[str]:
+def __create_image_ids(num: int) -> list[str]:
     """Makes a list of image IDs.
 
     Parameters
@@ -81,8 +79,6 @@ def create_email_message(from_address: str,
                          plaintext_content: str,
                          html_content: Optional[str] = None,
                          attachment_paths: Optional[list[str]] = None,
-                         embedded_image_paths: Optional[list[str]] = None,
-                         image_ids: Optional[list[str]] = None,
                          to_addresses: Optional[list[str]] = None,
                          cc_addresses: Optional[list[str]] = None,
                          bcc_addresses: Optional[list[str]] = None
@@ -100,16 +96,9 @@ def create_email_message(from_address: str,
         because some email clients do not display html emails.
     html_content : Optional[str]
         The HTML body of the email. Replaces plaintext_content if given 
-        and if the recipient(s) email client supports html emails.
+        and if the recipient's email client supports HTML emails.
     attachment_paths : Optional[list[str]]
         The paths to the files to be attached to the email.
-    embedded_image_paths : Optional[list[str]]
-        The paths to the images to be embedded in the email.
-    image_ids : Optional[list[str]]
-        The IDs of the images to be embedded in the email. Each embedded
-        image must have a corresponding ID already specified in the 
-        HTML, e.g. ``<img src='cid:{image_ids[0][1:-1]}' />``. Create 
-        image IDs using the ``create_image_ids`` function.
     to_addresses : Optional[list[str]]
         The email addresses of the recipients.
     cc_addresses : Optional[list[str]]
@@ -126,23 +115,19 @@ def create_email_message(from_address: str,
         msg['Cc'] = ', '.join(cc_addresses)
     if bcc_addresses is not None:
         msg['Bcc'] = ', '.join(bcc_addresses)
+
     msg.set_content(plaintext_content)
+    html_content, embedded_image_paths, image_ids = \
+        __convert_image_links(html_content)
     msg.add_alternative(html_content, subtype='html', charset='utf8')
 
-    if isinstance(embedded_image_paths, str):
-        embedded_image_paths = [embedded_image_paths]
-    if isinstance(image_ids, str):
-        image_ids = [image_ids]
-    if embedded_image_paths is not None and image_ids is not None:
-        # TODO: embedding images still does not work for drafts.
-        assert len(embedded_image_paths) == len(image_ids)
-        for i, path in enumerate(embedded_image_paths):
-            with open(path, 'rb') as f:
-                msg.add_attachment(f.read(),
-                                   maintype='image',
-                                   subtype=path.split('.')[-1],
-                                   filename=path.split('/')[-1],
-                                   cid=image_ids[i])
+    for i, path in enumerate(embedded_image_paths):
+        with open(path, 'rb') as f:
+            msg.add_attachment(f.read(),
+                                maintype='image',
+                                subtype=path.split('.')[-1],
+                                filename=path.split('/')[-1],
+                                cid=image_ids[i])
 
     if isinstance(attachment_paths, str):
         attachment_paths = [attachment_paths]
@@ -161,7 +146,8 @@ def create_email_message(from_address: str,
             elif file_ext == 'csv':
                 maintype = 'csv'
                 subtype = 'None'
-            else:  # This should work for pdfs and possibly other file types.
+            else:
+                # This should work for pdfs and maybe other file types.
                 maintype = 'application'
                 subtype = 'octet-stream'
         msg.add_attachment(file_data,
@@ -169,6 +155,36 @@ def create_email_message(from_address: str,
                            subtype=subtype,
                            filename=file_name)
     return msg
+
+
+def __convert_image_links(html_content: str) \
+        -> tuple[str, list[str], list[str]]:
+    """Converts image links to cid links.
+    
+    Parameters
+    ----------
+    html_content : str
+        The HTML content of the email.
+
+    Returns
+    -------
+    html_content : str
+        The HTML content of the email with image links converted to cid 
+        links.
+    embedded_image_paths : list[str]
+        The paths to the embedded images.
+    image_ids : list[str]
+        The image IDs.
+    """
+    image_link_pattern = \
+        re.compile(r'(?<=<img src=[\'\"])(?!cid:)(.+?)(?=[\'\"] ?/?>)')
+    embedded_image_paths = image_link_pattern.findall(html_content)
+    image_ids: list[str] = __create_image_ids(len(embedded_image_paths))
+    for image_id in image_ids:
+        html_content = image_link_pattern.sub(f'cid:{image_id[1:-1]}',
+                                              html_content,
+                                              count=1)
+    return html_content, embedded_image_paths, image_ids
 
 
 def draft(msg: EmailMessage,
