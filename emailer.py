@@ -57,11 +57,9 @@ def sample_use() -> None:
                                bcc_addresses=bcc_addresses)
 
     draft(msg=msg,
+    # send(msg=msg,
           from_address=email_address,
           email_app_password=email_password)
-    # send(msg=msg,
-    #      from_address=email_address,
-    #      email_app_password=email_password)
 
 
 def __create_image_ids(num: int) -> list[str]:
@@ -118,17 +116,18 @@ def create_email_message(from_address: str,
         msg['Bcc'] = ', '.join(bcc_addresses)
 
     msg.set_content(plaintext_content)
-    html_content, embedded_image_paths, image_ids = \
-        __convert_image_links(html_content)
-    msg.add_alternative(html_content, subtype='html', charset='utf8')
+    if html_content is not None:
+        html_content, embedded_image_paths, image_ids = \
+            __convert_image_links(html_content)
+        msg.add_alternative(html_content, subtype='html', charset='utf8')
 
-    for i, path in enumerate(embedded_image_paths):
-        with open(path, 'rb') as f:
-            msg.add_attachment(f.read(),
-                               maintype='image',
-                               subtype=path.split('.')[-1],
-                               filename=path.split('/')[-1],
-                               cid=image_ids[i])
+        for i, path in enumerate(embedded_image_paths):
+            with open(path, 'rb') as f:
+                msg.add_attachment(f.read(),
+                                   maintype='image',
+                                   subtype=path.split('.')[-1],
+                                   filename=path.split('/')[-1],
+                                   cid=image_ids[i])
 
     if isinstance(attachment_paths, str):
         attachment_paths = [attachment_paths]
