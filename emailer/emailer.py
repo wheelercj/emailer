@@ -106,6 +106,8 @@ def create_email_message(from_address: str,
         The email addresses of the BCC recipients.
     """
     msg = EmailMessage()
+    if not subject:
+        raise ValueError('subject must be given')
     msg['Subject'] = subject
     msg['From'] = from_address
     if not to_addresses and not cc_addresses and not bcc_addresses:
