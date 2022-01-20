@@ -108,6 +108,8 @@ def create_email_message(from_address: str,
     msg = EmailMessage()
     msg['Subject'] = subject
     msg['From'] = from_address
+    if not to_addresses and not cc_addresses and not bcc_addresses:
+        raise ValueError('At least one recipient must be given.')
     if to_addresses is not None:
         msg['To'] = ', '.join(to_addresses)
     if cc_addresses is not None:
