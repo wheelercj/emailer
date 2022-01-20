@@ -1,4 +1,4 @@
-"""Send and create drafts of emails.
+"""Send emails or create drafts of emails.
 
 Functions
 ---------
@@ -13,7 +13,8 @@ load_html
 localhost_send
     Sends a sample email to localhost.
 """
-# TODO: embedding images does not work for drafts.
+# TODO: embedding images does not work for drafts. Maybe use the Gmail 
+# API to handle Gmail drafts.
 
 
 import os
@@ -124,10 +125,10 @@ def create_email_message(from_address: str,
     for i, path in enumerate(embedded_image_paths):
         with open(path, 'rb') as f:
             msg.add_attachment(f.read(),
-                                maintype='image',
-                                subtype=path.split('.')[-1],
-                                filename=path.split('/')[-1],
-                                cid=image_ids[i])
+                               maintype='image',
+                               subtype=path.split('.')[-1],
+                               filename=path.split('/')[-1],
+                               cid=image_ids[i])
 
     if isinstance(attachment_paths, str):
         attachment_paths = [attachment_paths]
