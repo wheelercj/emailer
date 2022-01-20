@@ -275,7 +275,7 @@ def send(msg: EmailMessage,
 
 def __print_recipient_addresses(msg: EmailMessage) -> None:
     """Prints all recipient addresses."""
-    print('Emails sent')
+    print('Email sent')
     if msg['To']:
         print(f'\tto: {msg["To"]}')
     if msg['Cc']:
