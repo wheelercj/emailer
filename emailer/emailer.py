@@ -43,9 +43,9 @@ def sample_use() -> None:
     html_content = dedent('''\
         <h1>This is an email written with HTML</h1>
         <p>There should be one image embedded and one attached.</p>
-        <img src='sun 1024.jpg' />
+        <img src='sun.jpg' />
         ''')
-    attachment_paths = ['nebula 2 under 1 MB.jpg']
+    attachment_paths = ['nebula.jpg']
 
     msg = create_email_message(from_address=email_address,
                                subject=subject,
@@ -270,7 +270,18 @@ def send(msg: EmailMessage,
     with smtplib.SMTP_SSL(email_server, email_port, context=ctx) as smtp:
         smtp.login(from_address, email_app_password)
         smtp.send_message(msg)
-    print('Email sent.')
+    __print_recipient_addresses(msg)
+
+
+def __print_recipient_addresses(msg: EmailMessage) -> None:
+    """Prints all recipient addresses."""
+    print('Emails sent')
+    if msg['To']:
+        print(f'\tto: {msg["To"]}')
+    if msg['Cc']:
+        print(f'\tCC: {msg["Cc"]}')
+    if msg['Bcc']:
+        print(f'\tBCC: {msg["Bcc"]}')
 
 
 def load_html(file_path: str) -> str:
@@ -329,7 +340,3 @@ def localhost_send(from_address: str,
     with smtplib.SMTP('localhost', 1025) as smtp:
         smtp.send_message(msg)
     print('Email sent to localhost.')
-
-
-if __name__ == '__main__':
-    sample_use()
