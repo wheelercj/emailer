@@ -234,6 +234,7 @@ def draft(msg: EmailMessage,
                     flags='',
                     date_time=imaplib.Time2Internaldate(time.time()),
                     message=str(msg).encode('utf8'))
+    print('Draft created.')
 
 
 def send(msg: EmailMessage,
@@ -267,6 +268,7 @@ def send(msg: EmailMessage,
     with smtplib.SMTP_SSL(email_server, email_port, context=ctx) as smtp:
         smtp.login(from_address, email_app_password)
         smtp.send_message(msg)
+    print('Email sent.')
 
 
 def load_html(file_path: str) -> str:
@@ -324,6 +326,7 @@ def localhost_send(from_address: str,
 
     with smtplib.SMTP('localhost', 1025) as smtp:
         smtp.send_message(msg)
+    print('Email sent to localhost.')
 
 
 if __name__ == '__main__':
