@@ -11,7 +11,7 @@ send
 load_html
     Loads an html file and returns its contents.
 localhost_send
-    Sends a sample email to localhost.
+    Sends an email using an email object to localhost for testing.
 """
 # TODO: embedding images does not work for drafts. Maybe use the Gmail 
 # API to handle Gmail drafts.
@@ -31,21 +31,28 @@ from dotenv import load_dotenv
 from textwrap import dedent
 
 
-def sample_use() -> None:
+def __sample_use() -> None:
     load_dotenv()
     email_address = os.environ.get('EMAIL_ADDRESS')
     email_password = os.environ.get('EMAIL_PASSWORD')
+
+    subject = 'This is a sample email'
+    attachment_paths = []
+
     to_addresses = [os.environ.get('RECIPIENT_ADDRESS')]
     cc_addresses = []
     bcc_addresses = []
-    subject = 'This is a sample email'
-    plaintext_content = 'This is the plaintext content of the email.'
-    html_content = dedent('''\
-        <h1>This is an email written with HTML</h1>
-        <p>There should be one image embedded and one attached.</p>
-        <img src='sun.jpg' />
+
+    plaintext_content = dedent(f'''\
+        Hello,
+        
+        This is the plaintext content of the email.
         ''')
-    attachment_paths = ['nebula.jpg']
+    html_content = dedent(f'''\
+        <h1>Greetings!</h1>
+
+        <p>This is an email written with HTML.</p>
+        ''')
 
     msg = create_email_message(from_address=email_address,
                                subject=subject,
@@ -56,8 +63,8 @@ def sample_use() -> None:
                                cc_addresses=cc_addresses,
                                bcc_addresses=bcc_addresses)
 
-    draft(msg=msg,
     # send(msg=msg,
+    draft(msg=msg,
           from_address=email_address,
           email_app_password=email_password)
 
@@ -308,12 +315,7 @@ def load_html(file_path: str) -> str:
         return f.read()
 
 
-def localhost_send(from_address: str,
-                   subject: str,
-                   plaintext_content: str,
-                   to_addresses: Optional[list[str]] = None,
-                   cc_addresses: Optional[list[str]] = None,
-                   bcc_addresses: Optional[list[str]] = None) -> None:
+def localhost_send(msg: EmailMessage) -> None:
     """Immediately sends an email to a mail server on localhost.
     
     The mail server can be started with the following command:
@@ -321,29 +323,9 @@ def localhost_send(from_address: str,
     
     Parameters
     ----------
-    from_address : str
-        Your email address.
-    subject : str
-        The subject of the email.
-    plaintext_content : str
-        The body of the email.
-    to_addresses : Optional[list[str]]
-        The email addresses of the recipients, as if there could be any.
-    cc_addresses : Optional[list[str]]
-        The email addresses of the CC recipients, as if there could be 
-        any.
-    bcc_addresses : Optional[list[str]]
-        The email addresses of the BCC recipients, as if there could be 
-        any.
+    msg : EmailMessage
+        The email message to send.
     """
-    msg = EmailMessage()
-    msg['Subject'] = subject
-    msg['From'] = from_address
-    msg['To'] = ', '.join(to_addresses)
-    msg['Cc'] = ', '.join(cc_addresses)
-    msg['Bcc'] = ', '.join(bcc_addresses)
-    msg.set_content(plaintext_content)
-
     with smtplib.SMTP('localhost', 1025) as smtp:
         smtp.send_message(msg)
     print('Email sent to localhost.')
