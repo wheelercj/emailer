@@ -135,6 +135,8 @@ def create_email_message(from_address: str,
 
     if isinstance(attachment_paths, str):
         attachment_paths = [attachment_paths]
+    if not attachment_paths and 'attach' in plaintext_content.lower():
+        raise ValueError('No attachments found in plaintext_content.')
     image_types = ['jpg', 'jpeg', 'png', 'gif']
     for path in attachment_paths:
         with open(path, 'rb') as f:
