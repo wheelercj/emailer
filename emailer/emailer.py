@@ -126,6 +126,8 @@ def create_email_message(from_address: str,
     if bcc_addresses is not None:
         msg['Bcc'] = ', '.join(bcc_addresses)
 
+    if not plaintext_content:
+        raise ValueError('plaintext_content must be given')
     msg.set_content(plaintext_content)
     if html_content is not None:
         html_content, embedded_image_paths, image_ids = \
