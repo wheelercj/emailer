@@ -145,7 +145,7 @@ def create_email_message(from_address: str,
     if isinstance(attachment_paths, str):
         attachment_paths = [attachment_paths]
     if not attachment_paths and 'attach' in plaintext_content.lower():
-        raise ValueError('No attachments found in plaintext_content.')
+        raise ValueError('Attachment required because "attach" in email.')
     image_types = ['jpg', 'jpeg', 'png', 'gif']
     tested_file_types = ['jpg', 'jpeg', 'docx', 'pdf']
     for path in attachment_paths:
