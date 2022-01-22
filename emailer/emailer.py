@@ -147,11 +147,11 @@ def create_email_message(from_address: str,
     if not attachment_paths and 'attach' in plaintext_content.lower():
         raise ValueError('Attachment required because "attach" in email.')
     image_types = ['jpg', 'jpeg', 'png', 'gif']
-    tested_file_types = ['jpg', 'jpeg', 'docx', 'pdf']
+    tested_file_types = ['jpg', 'jpeg', 'docx', 'pdf', 'md']
     for path in attachment_paths:
         with open(path, 'rb') as f:
             file_data = f.read()
-            file_name = f.name
+            file_name = f.name.split('/')[-1]
             file_ext = file_name.split('.')[-1]
             if file_ext not in tested_file_types:
                 raise ValueError(f'File type {file_ext} not tested.')
