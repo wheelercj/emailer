@@ -117,35 +117,99 @@ def create_email_message(from_address: str,
         raise ValueError('subject must be given')
     msg['Subject'] = subject
     msg['From'] = from_address
-    if not to_addresses and not cc_addresses and not bcc_addresses:
-        raise ValueError('At least one recipient must be given.')
-    if to_addresses is not None:
-        msg['To'] = ', '.join(to_addresses)
-    if cc_addresses is not None:
-        msg['Cc'] = ', '.join(cc_addresses)
-    if bcc_addresses is not None:
-        msg['Bcc'] = ', '.join(bcc_addresses)
-
+    __add_recipients(msg, to_addresses, cc_addresses, bcc_addresses)
     if not plaintext_content:
         raise ValueError('plaintext_content must be given')
     msg.set_content(plaintext_content)
     if html_content is not None:
-        html_content, embedded_image_paths, image_ids = \
-            __convert_image_links(html_content)
-        msg.add_alternative(html_content, subtype='html', charset='utf8')
+        __add_html(msg, html_content)
+    __add_attachments(msg, attachment_paths, plaintext_content)
+    return msg
 
-        for i, path in enumerate(embedded_image_paths):
-            with open(path, 'rb') as f:
-                msg.add_attachment(f.read(),
-                                   maintype='image',
-                                   subtype=path.split('.')[-1],
-                                   filename=path.split('/')[-1],
-                                   cid=image_ids[i])
 
+def __add_recipients(msg: EmailMessage,
+                     to_addresses: Optional[list[str]],
+                     cc_addresses: Optional[list[str]],
+                     bcc_addresses: Optional[list[str]]) -> None:
+    """Adds recipients to the email message object.
+    
+    Parameters
+    ----------
+    msg : EmailMessage
+        The email message object.
+    to_addresses : Optional[list[str]]
+        The email addresses of the recipients.
+    cc_addresses : Optional[list[str]]
+        The email addresses of the CC recipients.
+    bcc_addresses : Optional[list[str]]
+        The email addresses of the BCC recipients.
+    """
+    if not to_addresses and not cc_addresses and not bcc_addresses:
+        raise ValueError('At least one recipient must be given.')
+    if to_addresses:
+        msg['To'] = ', '.join(to_addresses)
+    if cc_addresses:
+        msg['Cc'] = ', '.join(cc_addresses)
+    if bcc_addresses:
+        msg['Bcc'] = ', '.join(bcc_addresses)
+
+
+def __add_html(msg: EmailMessage, html_content: str) -> None:
+    """Adds a html content to the email message object.
+    
+    Parameters
+    ----------
+    msg : EmailMessage
+        The email message object.
+    html_content : str
+        The html content to be added.
+    """
+    html_content, embedded_image_paths, image_ids = \
+        __convert_image_links(html_content)
+    msg.add_alternative(html_content, subtype='html', charset='utf8')
+    __embed_images(msg, embedded_image_paths, image_ids)
+
+
+def __embed_images(msg: EmailMessage,
+                   embedded_image_paths: list[str],
+                   image_ids: list[str]) -> None:
+    """Embeds images in the email.
+    
+    Parameters
+    ----------
+    msg : EmailMessage
+        The email message object.
+    embedded_image_paths : list[str]
+        The paths to the images to be embedded.
+    image_ids : list[str]
+        The image IDs to be embedded.
+    """
+    for i, path in enumerate(embedded_image_paths):
+        with open(path, 'rb') as f:
+            msg.add_attachment(f.read(),
+                               maintype='image',
+                               subtype=path.split('.')[-1],
+                               filename=path.split('/')[-1],
+                               cid=image_ids[i])
+
+
+def __add_attachments(msg: EmailMessage,
+                      attachment_paths: list[str],
+                      plaintext_content: str) -> None:
+    """Adds attachments to an email message object.
+
+    Parameters
+    ----------
+    msg : EmailMessage
+        The email message object to which the attachments will be added.
+    attachment_paths : list[str]
+        The paths to the files to be attached to the email.
+    plaintext_content : str
+        The plaintext content of the email.
+    """
     if isinstance(attachment_paths, str):
         attachment_paths = [attachment_paths]
-    if not attachment_paths and 'attach' in plaintext_content.lower():
-        raise ValueError('Attachment required because "attach" in email.')
+    __check_for_attachment_hints(plaintext_content, attachment_paths)
     image_types = ['jpg', 'jpeg', 'png', 'gif']
     tested_file_types = ['jpg', 'jpeg', 'docx', 'pdf', 'md']
     for path in attachment_paths:
@@ -165,14 +229,45 @@ def create_email_message(from_address: str,
                 maintype = 'csv'
                 subtype = 'None'
             else:
-                # This should work for pdfs and maybe other file types.
                 maintype = 'application'
                 subtype = 'octet-stream'
         msg.add_attachment(file_data,
                            maintype=maintype,
                            subtype=subtype,
                            filename=file_name)
-    return msg
+
+
+def __check_for_attachment_hints(plaintext_content: str,
+                                 attachment_paths: list[str]) -> None:
+    """Checks for the presence of attachment hints in the email body.
+
+    Raises ValueError if the email body contains an attachment hint.
+    
+    Parameters
+    ----------
+    plaintext_content : str
+        The plaintext content of the email.
+    attachment_paths : list[str]
+        The paths to the files to be attached to the email.
+    """
+    if not attachment_paths:
+        attachment_hints = [
+            'attach',
+            'enclosed',
+            'CV',
+            'resume',
+            'cover letter',
+            '.doc',
+            '.pdf',
+            '.xls',
+            '.ptt',
+            '.pps',
+        ]
+        plaintext_content = plaintext_content.lower()
+        for hint in attachment_hints:
+            if hint in plaintext_content:
+                raise ValueError(f'Attachment required because "{hint}" is ' \
+                                 'in the email.')
 
 
 def __convert_image_links(html_content: str) \
