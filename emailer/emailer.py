@@ -252,6 +252,7 @@ def __check_for_attachment_hints(plaintext_content: str,
     """
     if not attachment_paths:
         attachment_hints = [
+            # These must all be lowercase.
             'attach',
             'enclosed',
             ' cv ',
