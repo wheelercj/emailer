@@ -254,7 +254,7 @@ def __check_for_attachment_hints(plaintext_content: str,
         attachment_hints = [
             'attach',
             'enclosed',
-            'CV',
+            ' cv ',
             'resume',
             'cover letter',
             '.doc',
