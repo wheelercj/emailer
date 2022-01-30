@@ -7,7 +7,7 @@ create_email_message
 draft
     Creates a draft email using an email message object.
 send
-    Sends an email using an email message object.
+    Creates and sends an email using an email message object.
 load_html
     Loads an html file and returns its contents.
 localhost_send
@@ -122,6 +122,7 @@ def create_email_message(from_address: str,
         raise ValueError('plaintext_content must be given')
     msg.set_content(plaintext_content)
     if html_content is not None:
+        html_content = __convert_md_url_links_to_html_links(html_content)
         __add_html(msg, html_content)
     __add_attachments(msg, attachment_paths, plaintext_content)
     return msg
@@ -152,6 +153,19 @@ def __add_recipients(msg: EmailMessage,
         msg['Cc'] = ', '.join(cc_addresses)
     if bcc_addresses:
         msg['Bcc'] = ', '.join(bcc_addresses)
+
+
+def __convert_md_url_links_to_html_links(html_content: str) -> str:
+    """Converts markdown url links to html links.
+    
+    Parameters
+    ----------
+    html_content : str
+        The html content to be converted.
+    """
+    md_link_pattern = re.compile(r'\[(.*?)\]\((.*?)\)')
+    html_content = md_link_pattern.sub(r'<a href="\2">\1</a>', html_content)
+    return html_content
 
 
 def __add_html(msg: EmailMessage, html_content: str) -> None:
