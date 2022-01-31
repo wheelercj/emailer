@@ -69,7 +69,7 @@ def __sample_use() -> None:
         bcc_addresses=bcc_addresses,
     )
 
-    # send(msg=msg,
+    # send(msg=msg, from_address=email_address, email_app_password=email_password)
     draft(msg=msg, from_address=email_address, email_app_password=email_password)
 
 
@@ -106,8 +106,8 @@ def create_email_message(
         The body of the email. Required even if an html_content is given
         because some email clients do not display html emails.
     html_content : Optional[str]
-        The HTML body of the email. Replaces plaintext_content if given
-        and if the recipient's email client supports HTML emails.
+        The HTML body of the email. Replaces plaintext_content if given and if
+        the recipient's email client supports HTML emails.
     attachment_paths : Optional[list[str]]
         The paths to the files to be attached to the email.
     to_addresses : Optional[list[str]]
@@ -305,8 +305,7 @@ def __convert_image_links(html_content: str) -> tuple[str, list[str], list[str]]
     Returns
     -------
     html_content : str
-        The HTML content of the email with image links converted to cid
-        links.
+        The HTML content of the email with image links converted to cid links.
     embedded_image_paths : list[str]
         The paths to the embedded images.
     image_ids : list[str]
@@ -339,10 +338,10 @@ def draft(
     from_address : str
         Your email address.
     email_app_password : str
-        The app password to access your email account. For gmail, this
-        is different from your google password. To create a gmail app
-        password, go to https://myaccount.google.com/apppasswords.
-        Multi-factor authentication must be enabled to visit this site.
+        The app password to access your email account. For gmail, this is
+        different from your google password. To create a gmail app password, go
+        to https://myaccount.google.com/apppasswords. Multi-factor
+        authentication must be enabled to visit this site.
     email_server : str
         The email server to connect to.
         Gmail: "imap.gmail.com"
@@ -397,10 +396,10 @@ def send(
     from_address : str
         Your email address.
     email_app_password : str
-        The app password to access your email account. For gmail, this
-        is different from your google password. To create a gmail app
-        password, go to https://myaccount.google.com/apppasswords.
-        Multi-factor authentication must be enabled to visit this site.
+        The app password to access your email account. For gmail, this is
+        different from your google password. To create a gmail app password, go
+        to https://myaccount.google.com/apppasswords. Multi-factor
+        authentication must be enabled to visit this site.
     email_server : str
         The email server to connect to.
         Gmail: "smtp.gmail.com"
