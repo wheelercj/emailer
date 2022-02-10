@@ -17,7 +17,10 @@ def load(contacts: str, filter_predicate: Callable = None) -> Iterator:
     """
     contacts_obj = Contacts()
     for line in contacts.splitlines():
-        contacts_obj.append(Contact(*line.split(", ")))
+        fields = *line.split(",")
+        for i, field in enumerate(fields):
+            fields[i] = field.strip()
+        contacts_obj.append(Contact(fields))
     return filter(filter_predicate, contacts_obj)
 
 
