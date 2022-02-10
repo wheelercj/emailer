@@ -15,19 +15,16 @@ class Contacts:
 
     def __getitem__(self, first_and_last_name: str) -> Contact:
         for contact in self.data:
-            if contact.first_name + ' ' + contact.last_name \
-                    == first_and_last_name:
+            if contact.first_name + " " + contact.last_name == first_and_last_name:
                 return contact
-        raise KeyError(f'No contact with name {first_and_last_name}')
+        raise KeyError(f"No contact with name {first_and_last_name}")
 
-    def __setitem__(self,
-                    first_and_last_name: str,
-                    new_contact: Contact) -> None:
+    def __setitem__(self, first_and_last_name: str, new_contact: Contact) -> None:
         for contact in self.data:
-            if contact.first_name + ' ' + contact.last_name \
-                    == first_and_last_name:
-                raise KeyError('There is already a contact with name ' \
-                               f'{first_and_last_name}')
+            if contact.first_name + " " + contact.last_name == first_and_last_name:
+                raise KeyError(
+                    f"There is already a contact with name {first_and_last_name}"
+                )
         self.data.append(new_contact)
 
     def append(self, new_contact: Contact) -> None:
@@ -41,7 +38,6 @@ class Contacts:
 
     def __contains__(self, first_and_last_name: str) -> bool:
         for contact in self.data:
-            if contact.first_name + ' ' + contact.last_name \
-                    == first_and_last_name:
+            if contact.first_name + " " + contact.last_name == first_and_last_name:
                 return True
         return False
