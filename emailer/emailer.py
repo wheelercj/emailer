@@ -290,7 +290,7 @@ def __check_for_attachment_hints(
         for hint in attachment_hints:
             if hint in plaintext_content:
                 raise ValueError(
-                    f'Attachment required because "{hint}" is ' "in the email."
+                    f'Attachment required because "{hint}" is in the email.'
                 )
 
 
