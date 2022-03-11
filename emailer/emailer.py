@@ -7,7 +7,12 @@ create_email_message
 draft
     Creates a draft email using an email message object.
 send
-    Creates and sends an email using an email message object.
+    Creates and sends an email using an email message object. By default, the
+    email's send time, subject, and recipient(s) are logged to a file named
+    ``sent.log``.
+log
+    Logs the current time and the recipient(s) and subject of an email message
+    object.
 load_html
     Loads an html file and returns its contents.
 localhost_send
@@ -20,6 +25,7 @@ localhost_send
 import os
 import re
 import time
+from datetime import datetime
 import ssl
 import smtplib
 import imaplib
@@ -384,6 +390,7 @@ def send(
     msg: EmailMessage,
     from_address: str,
     email_app_password: str,
+    log_file_path: str = "sent.log",
     email_server: str = "smtp.gmail.com",
     email_port: int = 465,
 ) -> None:
@@ -400,6 +407,10 @@ def send(
         different from your google password. To create a gmail app password, go
         to https://myaccount.google.com/apppasswords. Multi-factor
         authentication must be enabled to visit this site.
+    log_file_path : str
+        The path to the log file for logging emails' subject, recipient(s), and
+        send time. Set this to an empty string, None, or False to disable
+        logging.
     email_server : str
         The email server to connect to.
         Gmail: "smtp.gmail.com"
@@ -416,6 +427,8 @@ def send(
     with smtplib.SMTP_SSL(email_server, email_port, context=ctx) as smtp:
         smtp.login(from_address, email_app_password)
         smtp.send_message(msg)
+    if log_file_path:
+        log(msg, log_file_path)
     __print_recipient_addresses(msg)
 
 
@@ -428,6 +441,30 @@ def __print_recipient_addresses(msg: EmailMessage) -> None:
         print(f'\tCC: {msg["Cc"]}')
     if msg["Bcc"]:
         print(f'\tBCC: {msg["Bcc"]}')
+
+
+def log(msg: EmailMessage, log_file_path: str) -> None:
+    """Logs an email's recipient(s), subject, and send time to a file.
+
+    Parameters
+    ----------
+    msg : EmailMessage
+        The email message to log.
+    log_file : str
+        The path to the log file.
+    """
+    now = datetime.now()
+    with open(log_file_path, "a") as file:
+        file.write(
+            dedent(
+                f"""\
+                {now.strftime('%Y-%m-%d %H:%M:%S')} - {msg['Subject']}
+                \tTo: {msg['To']}
+                \tCC: {msg['Cc']}
+                \tBCC: {msg['Bcc']}
+                """
+            )
+        )
 
 
 def load_html(file_path: str) -> str:
