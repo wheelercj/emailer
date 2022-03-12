@@ -53,6 +53,10 @@ contacts_str = dedent(
 subject = "This is the email's subject"
 recipients = contacts_.load(contacts_str, lambda x: x.group_name == "me")
 attachment_paths = ["C:/Users/chris/Documents/book voucher.pdf"]
+# I happen to use an absolute file path here and for an embedded image below,
+# but you can just type the file's name if it's in the same folder as emailer's
+# source code.
+
 for recipient in recipients:
     email_content = dedent(
         f"""\
