@@ -6,18 +6,18 @@ An email client with a "Python user-interface" (no user interface) for maximum c
 
 * Write emails in an f-string with either markdown, plain text, or HTML.
 * Files are easy to attach and images are easy to embed.
-* Quickly convert contact info from CSV to Python objects with `contacts_.load`, or customize the function to work with other formats in seconds.
+* Quickly convert contact info from CSV to Python objects with `contacts.load`, or customize the function to work with other formats in seconds.
 * Be confident and write emails fast. You can use `emailer.assert_unique` to raise an exception if you accidentally reuse a subject, attachment name, or any other string, even between runs.
 * The code is easy to read and change. Type hints and docstrings are used almost everywhere possible, and the code has been auto-formatted with Black.
 
 ## usage
 
-Download the source code, and then install it as a local package with the terminal command `python3 -m pip install -e .` while in the same folder as the source code. This will also install the third party dependencies listed in `requirements.txt`. Now you can use `from emailer import emailer, contacts_` in other Python files saved anywhere on your computer. Be sure to avoid naming a Python file the same as one built into the Python language, such as `email.py`. I happen to use this with gmail; if you use a different email service provider, you will need to specify the email server and possibly the email port and mailbox name as explained in the `emailer.send` and `emailer.draft` docstrings.
+Download the source code, and then install it as a local package with the terminal command `python3 -m pip install -e .` while in the same folder as the source code. This will also install the third party dependencies listed in `requirements.txt`. Now you can use `from emailer import emailer, contacts` in other Python files saved anywhere on your computer. Be sure to avoid naming a Python file the same as one built into the Python language, such as `email.py`. I happen to use this with gmail; if you use a different email service provider, you will need to specify the email server and possibly the email port and mailbox name as explained in the `emailer.send` and `emailer.draft` docstrings.
 
 Below is a sample that shows how I use this package.
 
 ```python
-from emailer import emailer, contacts_
+from emailer import emailer, contacts
 import os
 from textwrap import dedent
 from dotenv import load_dotenv  # https://pypi.org/project/python-dotenv/
@@ -28,10 +28,10 @@ my_email_address = "my.email.address@gmail.com"
 # In this sample code, the contact info is fake.
 my_email_password = os.environ.get("EMAIL_PASSWORD")
 
-# The format of the contact info below is based entirely on the Contact
-# dataclass in contacts_.py, which you can change at any time.
+# The format of the contact info below is based on the Contact dataclass in
+# contacts.py, which you can change at any time.
 contacts_str = dedent(
-    # first name, last name, email address, group name
+    # first_name, last_name, email_address, group_name
     """\
     For, Testing, different.email@duck.com, me
     Maximillian, Marsh, remedy@inbox.com, member
@@ -52,14 +52,13 @@ contacts_str = dedent(
 
 subject = "This is the email's subject"
 emailer.assert_unique(subject, "subject")
-recipients = contacts_.load(contacts_str, lambda x: x.group_name == "me")
+recipients = contacts.load(contacts_str, lambda x: x.group_name == "me")
 attachment_paths = ["C:/Users/chris/Documents/book voucher.pdf"]
 # I happen to use an absolute file path here and for an embedded image below,
 # but you can just use the file's name if it's in the same folder as emailer's
 # source code.
-if attachment_paths:
-    for path in attachment_paths:
-        emailer.assert_unique(path, "attachment_paths")
+for path in attachment_paths:
+    emailer.assert_unique(path, "attachment_paths")
 
 for recipient in recipients:
     email_content = dedent(
@@ -71,7 +70,7 @@ for recipient in recipients:
         
         The first line of this email will show the correct first name for each
         recipient, and it's easy to add more info that's different for each
-        person. Just add a variable to the Contact dataclass in contacts_.py
+        person. Just add a variable to the Contact dataclass in contacts.py
         and add to your list of contact info.
 
         ## markdown syntax samples
@@ -133,7 +132,7 @@ for recipient in recipients:
 
 ## public functions
 
-**contacts_.load** - Loads contacts from a string. By default, each contact must be on its own line and must contain the comma-separated data specified in the Contact class (in contacts_.py). A filter predicate can be provided to filter out some contacts.
+**contacts.load** - Loads contacts from a string. By default, each contact must be on its own line and must contain the comma-separated data specified in the Contact class (in contacts.py). A filter predicate can be provided to filter out some contacts.
 
 **emailer.create_email_message** - Creates an email message object.
 

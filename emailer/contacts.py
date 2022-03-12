@@ -2,12 +2,12 @@ from dataclasses import dataclass
 from typing import Iterator, Callable
 
 
-def load(contacts: str, filter_predicate: Callable = None) -> Iterator:
+def load(contacts_: str, filter_predicate: Callable = None) -> Iterator:
     """Loads contacts from a string.
 
     Parameters
     ----------
-    contacts : str
+    contacts_ : str
         The string containing the contacts. Each contact must be on its own
         line and must contain the comma-separated data specified in the Contact
         class.
@@ -16,7 +16,7 @@ def load(contacts: str, filter_predicate: Callable = None) -> Iterator:
         used to load only some of the contacts present in the string.
     """
     contacts_obj = Contacts()
-    for line in contacts.splitlines():
+    for line in contacts_.splitlines():
         fields = line.split(",")
         for i, field in enumerate(fields):
             fields[i] = field.strip()
