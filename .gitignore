@@ -4,3 +4,5 @@
 *.jpg
 *.pdf
 *.egg-info
+sent.log
+unique_strings.db

@@ -3,13 +3,18 @@
 Functions
 ---------
 create_email_message
-    Creates an email message object.
+    Creates an email message object. By default, email subjects and attachment
+    paths are saved to a local sqlite3 database file named
+    ``unique_strings.db``, and every subject and attachment path must be unique
+    (an exception will be raised if a subject or attachment path is reused).
 draft
     Creates a draft email using an email message object.
 send
     Creates and sends an email using an email message object. By default, the
     email's send time, subject, and recipient(s) are logged to a file named
     ``sent.log``.
+assert_unique
+    Asserts that the given text has not been used before with the given key.
 log
     Logs the current time and the recipient(s) and subject of an email message
     object.
@@ -33,8 +38,10 @@ import imghdr
 from email.message import EmailMessage
 from email.utils import make_msgid
 from typing import Optional
-from dotenv import load_dotenv
+from dotenv import load_dotenv  # https://pypi.org/project/python-dotenv/
 from textwrap import dedent
+import sqlite3
+from __future__ import annotations
 
 
 def __sample_use() -> None:
@@ -99,6 +106,8 @@ def create_email_message(
     to_addresses: Optional[list[str]] = None,
     cc_addresses: Optional[list[str]] = None,
     bcc_addresses: Optional[list[str]] = None,
+    assert_unique_subject: bool = True,
+    assert_unique_attachment_paths: bool = True,
 ) -> EmailMessage:
     """Initializes an email message object.
 
@@ -113,7 +122,8 @@ def create_email_message(
         because some email clients do not display html emails.
     html_content : Optional[str]
         The HTML body of the email. Replaces plaintext_content if given and if
-        the recipient's email client supports HTML emails.
+        the recipient's email client supports HTML emails. Any markdown links
+        will be converted to HTML links for both URLs and images.
     attachment_paths : Optional[list[str]]
         The paths to the files to be attached to the email.
     to_addresses : Optional[list[str]]
@@ -122,20 +132,30 @@ def create_email_message(
         The email addresses of the CC recipients.
     bcc_addresses : Optional[list[str]]
         The email addresses of the BCC recipients.
+    assert_unique_subject : bool
+        If True, the subject must be unique.
+    assert_unique_attachment_paths : bool
+        If True, the attachment paths must be unique.
     """
     msg = EmailMessage()
     if not subject:
         raise ValueError("subject must be given")
     msg["Subject"] = subject
+    if assert_unique_subject:
+        assert_unique(subject, "subject")
     msg["From"] = from_address
     __add_recipients(msg, to_addresses, cc_addresses, bcc_addresses)
     if not plaintext_content:
         raise ValueError("plaintext_content must be given")
     msg.set_content(plaintext_content)
     if html_content is not None:
-        html_content = __convert_md_url_links_to_html_links(html_content)
+        html_content = __convert_md_links_to_html_links(html_content)
         __add_html(msg, html_content)
-    __add_attachments(msg, attachment_paths, plaintext_content)
+    if attachment_paths is not None:
+        if assert_unique_attachment_paths:
+            for path in attachment_paths:
+                assert_unique(path, "attachment_paths")
+        __add_attachments(msg, attachment_paths, plaintext_content)
     return msg
 
 
@@ -168,14 +188,16 @@ def __add_recipients(
         msg["Bcc"] = ", ".join(bcc_addresses)
 
 
-def __convert_md_url_links_to_html_links(html_content: str) -> str:
-    """Converts markdown url links to html links.
+def __convert_md_links_to_html_links(html_content: str) -> str:
+    """Converts markdown url links and image links to html.
 
     Parameters
     ----------
     html_content : str
         The html content to be converted.
     """
+    md_image_link_pattern = re.compile(r"!\[(.*?)\]\((.*?)\)")
+    html_content = md_image_link_pattern.sub(r'<img src="\2" alt="\1" />', html_content)
     md_link_pattern = re.compile(r"\[(.*?)\]\((.*?)\)")
     html_content = md_link_pattern.sub(r'<a href="\2">\1</a>', html_content)
     return html_content
@@ -317,7 +339,9 @@ def __convert_image_links(html_content: str) -> tuple[str, list[str], list[str]]
     image_ids : list[str]
         The image IDs.
     """
-    image_link_pattern = re.compile(r"(?<=<img src=[\'\"])(?!cid:)(.+?)(?=[\'\"] ?/?>)")
+    image_link_pattern = re.compile(
+        r"(?<=<img src=[\'\"])(?!cid:)(.+?)(?=[\'\"] ?(?:alt=.+?)? ?/?>)"
+    )
     embedded_image_paths = image_link_pattern.findall(html_content)
     image_ids: list[str] = __create_image_ids(len(embedded_image_paths))
     for image_id in image_ids:
@@ -441,6 +465,47 @@ def __print_recipient_addresses(msg: EmailMessage) -> None:
         print(f'\tCC: {msg["Cc"]}')
     if msg["Bcc"]:
         print(f'\tBCC: {msg["Bcc"]}')
+
+
+def assert_unique(
+    text: str, key: str, database_path: str = "unique_strings.db"
+) -> None:
+    """Asserts that the given text has not been used before with the given key.
+
+    Parameters
+    ----------
+    text : str
+        The text to check and save.
+    key : str
+        The category of the text.
+    database_path : str
+        The path to the database file. A table named "unique_strings" will be
+        created if it does not exist.
+    """
+    with sqlite3.connect(database_path) as con:
+        cur = con.cursor()
+        cur.execute(
+            """CREATE TABLE IF NOT EXISTS unique_strings (
+            id INTEGER PRIMARY KEY,
+            key TEXT,
+            text TEXT
+            )"""
+        )
+        cur.execute(
+            """SELECT *
+            FROM unique_strings
+            WHERE key = ?
+            AND text = ?""",
+            (key, text),
+        )
+        if cur.fetchall():
+            raise RuntimeError(f'"{text}" has already been used as a {key}')
+        cur.execute(
+            """INSERT INTO unique_strings
+            (key, text)
+            VALUES (?, ?)""",
+            (key, text),
+        )
 
 
 def log(msg: EmailMessage, log_file_path: str) -> None:
