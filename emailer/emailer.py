@@ -27,6 +27,7 @@ localhost_send
 # API to handle Gmail drafts.
 
 
+from __future__ import annotations
 import os
 import re
 import time
@@ -39,9 +40,9 @@ from email.message import EmailMessage
 from email.utils import make_msgid
 from typing import Optional
 from dotenv import load_dotenv  # https://pypi.org/project/python-dotenv/
+from mistune import markdown as HTMLConverter  # https://github.com/lepture/mistune
 from textwrap import dedent
 import sqlite3
-from __future__ import annotations
 
 
 def __sample_use() -> None:
@@ -63,6 +64,13 @@ def __sample_use() -> None:
         This is the plaintext content of the email.
         """
     )
+    md_content = dedent(
+        f"""\
+        # This is a sample email
+
+        This is the markdown content of the email.
+        """
+    )
     html_content = dedent(
         f"""\
         <h1>Greetings!</h1>
@@ -75,6 +83,7 @@ def __sample_use() -> None:
         from_address=email_address,
         subject=subject,
         plaintext_content=plaintext_content,
+        md_content=md_content,
         html_content=html_content,
         attachment_paths=attachment_paths,
         to_addresses=to_addresses,
@@ -101,6 +110,7 @@ def create_email_message(
     from_address: str,
     subject: str,
     plaintext_content: str,
+    md_content: Optional[str] = None,
     html_content: Optional[str] = None,
     attachment_paths: Optional[list[str]] = None,
     to_addresses: Optional[list[str]] = None,
@@ -118,12 +128,18 @@ def create_email_message(
     subject : str
         The subject of the email.
     plaintext_content : str
-        The body of the email. Required even if an html_content is given
+        The body of the email. Required even if md or html content is given
         because some email clients do not display html emails.
+    md_content : Optional[str]
+        The markdown content of the email. Replaces plaintext_content if given
+        and if the recipient's email client supports HTML emails. The markdown
+        content is converted to HTML. Do not give both md_content and
+        html_content.
     html_content : Optional[str]
         The HTML body of the email. Replaces plaintext_content if given and if
         the recipient's email client supports HTML emails. Any markdown links
-        will be converted to HTML links for both URLs and images.
+        will be converted to HTML links for both URLs and images. Do not give
+        both md_content and html_content.
     attachment_paths : Optional[list[str]]
         The paths to the files to be attached to the email.
     to_addresses : Optional[list[str]]
@@ -137,6 +153,8 @@ def create_email_message(
     assert_unique_attachment_paths : bool
         If True, the attachment paths must be unique.
     """
+    if md_content and html_content:
+        raise ValueError("Do not give both md_content and html_content.")
     msg = EmailMessage()
     if not subject:
         raise ValueError("subject must be given")
@@ -148,7 +166,11 @@ def create_email_message(
     if not plaintext_content:
         raise ValueError("plaintext_content must be given")
     msg.set_content(plaintext_content)
-    if html_content is not None:
+    if md_content is not None:
+        html_content = HTMLConverter(md_content)
+        html_content = __convert_md_links_to_html_links(html_content)
+        __add_html(msg, html_content)
+    elif html_content is not None:
         html_content = __convert_md_links_to_html_links(html_content)
         __add_html(msg, html_content)
     if attachment_paths is not None:
