@@ -2,7 +2,9 @@ from dataclasses import dataclass
 from typing import Iterator, Callable
 
 
-def load(contacts_: str, filter_predicate: Callable = None) -> Iterator:
+def load_from_str(
+    contacts_: str, filter_predicate: Callable = None, delimiter: str = ","
+) -> Iterator:
     """Loads contacts from a string.
 
     Parameters
@@ -17,7 +19,7 @@ def load(contacts_: str, filter_predicate: Callable = None) -> Iterator:
     """
     contacts_obj = Contacts()
     for line in contacts_.splitlines():
-        fields = line.split(",")
+        fields = line.split(delimiter)
         for i, field in enumerate(fields):
             fields[i] = field.strip()
         contacts_obj.append(Contact(*fields))

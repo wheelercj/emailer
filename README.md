@@ -6,7 +6,7 @@ An email client with a "Python user-interface" (no user interface) for maximum c
 
 * Write emails in an f-string with either markdown, plain text, or HTML.
 * Files are easy to attach and images are easy to embed.
-* Quickly convert contact info from CSV to Python objects with `contacts.load`, or customize the function to work with other formats in seconds.
+* Quickly convert contact info from a CSV string to Python objects with `contacts.load_from_str`, or customize the function to work with other formats in seconds.
 * Be confident and write emails fast. You can use `emailer.assert_unique` to raise an exception if you accidentally reuse a subject, attachment name, or any other string, even between runs.
 * The code is easy to read and change. Type hints and docstrings are used almost everywhere possible, and the code has been auto-formatted with Black.
 
@@ -52,7 +52,7 @@ contacts_str = dedent(
 
 subject = "This is the email's subject"
 emailer.assert_unique(subject, "subject")
-recipients = contacts.load(contacts_str, lambda x: x.group_name == "me")
+recipients = contacts.load_from_str(contacts_str, lambda x: x.group_name == "me")
 attachment_paths = ["C:/Users/chris/Documents/book voucher.pdf"]
 # I happen to use an absolute file path here and for an embedded image below,
 # but you can just use the file's name if it's in the same folder as emailer's
@@ -132,7 +132,7 @@ for recipient in recipients:
 
 ## public functions
 
-**contacts.load** - Loads contacts from a string. By default, each contact must be on its own line and must contain the comma-separated data specified in the Contact class (in contacts.py). A filter predicate can be provided to filter out some contacts.
+**contacts.load_from_str** - Loads contacts from a string. By default, each contact must be on its own line and must contain the comma-separated data specified in the Contact class (in contacts.py). A filter predicate can be provided to filter out some contacts.
 
 **emailer.create_email_message** - Creates an email message object.
 
