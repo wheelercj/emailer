@@ -4,10 +4,10 @@ An email client with a "Python user-interface" (no user interface) for maximum c
 
 ## features
 
-* Write emails in an f-string (or multiple strings combined later) in either markdown, plain text, or HTML.
+* Write emails in an f-string with either markdown, plain text, or HTML.
 * Files are easy to attach and images are easy to embed.
 * Quickly convert contact info from CSV to Python objects with `contacts_.load`, or customize the function to work with other formats in seconds.
-* Be confident and write emails fast. If you reuse a subject, leave the subject empty, or do some other things that may be a mistake, an exception will be raised.
+* Be confident and write emails fast. You can use `emailer.assert_unique` to raise an exception if you accidentally reuse a subject, attachment name, or any other string, even between runs.
 * The code is easy to read and change. Type hints and docstrings are used almost everywhere possible, and the code has been auto-formatted with Black.
 
 ## usage
@@ -51,11 +51,15 @@ contacts_str = dedent(
 )
 
 subject = "This is the email's subject"
+emailer.assert_unique(subject, "subject")
 recipients = contacts_.load(contacts_str, lambda x: x.group_name == "me")
 attachment_paths = ["C:/Users/chris/Documents/book voucher.pdf"]
 # I happen to use an absolute file path here and for an embedded image below,
-# but you can just type the file's name if it's in the same folder as emailer's
+# but you can just use the file's name if it's in the same folder as emailer's
 # source code.
+if attachment_paths:
+    for path in attachment_paths:
+        emailer.assert_unique(path, "attachment_paths")
 
 for recipient in recipients:
     email_content = dedent(
@@ -131,13 +135,13 @@ for recipient in recipients:
 
 **contacts_.load** - Loads contacts from a string. By default, each contact must be on its own line and must contain the comma-separated data specified in the Contact class (in contacts_.py). A filter predicate can be provided to filter out some contacts.
 
-**emailer.create_email_message** - Creates an email message object. By default, email subjects and attachment paths are saved to a local sqlite3 database file named `unique_strings.db`, and every subject and attachment path must be unique (an exception will be raised if a subject or attachment path is reused).
+**emailer.create_email_message** - Creates an email message object.
 
 **emailer.draft** - Creates a draft email using an email message object.
 
 **emailer.send** - Creates and sends an email using an email message object. By default, the email's send time, subject, and recipient(s) are logged to a file named `sent.log`.
 
-**emailer.assert_unique** - Asserts that the given text has not been used before with the given key.
+**emailer.assert_unique** - Asserts that the given text has not been used before with the given key. Given strings are saved to a local sqlite3 database file named `unique_strings.db`. If the same two strings are given again, an exception is raised.
 
 **emailer.log** - Logs the current time and the recipient(s) and subject of an email message object.
 

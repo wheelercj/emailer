@@ -3,10 +3,7 @@
 Functions
 ---------
 create_email_message
-    Creates an email message object. By default, email subjects and attachment
-    paths are saved to a local sqlite3 database file named
-    ``unique_strings.db``, and every subject and attachment path must be unique
-    (an exception will be raised if a subject or attachment path is reused).
+    Creates an email message object.
 draft
     Creates a draft email using an email message object.
 send
@@ -15,6 +12,9 @@ send
     ``sent.log``.
 assert_unique
     Asserts that the given text has not been used before with the given key.
+    Given strings are saved to a local sqlite3 database file named
+    ``unique_strings.db``. If the same two strings are given again, an
+    exception is raised.
 log
     Logs the current time and the recipient(s) and subject of an email message
     object.
@@ -54,8 +54,6 @@ def create_email_message(
     to_addresses: Optional[list[str]] = None,
     cc_addresses: Optional[list[str]] = None,
     bcc_addresses: Optional[list[str]] = None,
-    assert_unique_subject: bool = True,
-    assert_unique_attachment_paths: bool = True,
 ) -> EmailMessage:
     """Initializes an email message object.
 
@@ -86,10 +84,6 @@ def create_email_message(
         The email addresses of the CC recipients.
     bcc_addresses : Optional[list[str]]
         The email addresses of the BCC recipients.
-    assert_unique_subject : bool
-        If True, the subject must be unique.
-    assert_unique_attachment_paths : bool
-        If True, the attachment paths must be unique.
     """
     if md_content and html_content:
         raise ValueError("Do not give both md_content and html_content.")
@@ -97,8 +91,6 @@ def create_email_message(
     if not subject:
         raise ValueError("subject must be given")
     msg["Subject"] = subject
-    if assert_unique_subject:
-        assert_unique(subject, "subject")
     msg["From"] = from_address
     __add_recipients(msg, to_addresses, cc_addresses, bcc_addresses)
     if not plaintext_content:
@@ -111,10 +103,7 @@ def create_email_message(
     elif html_content is not None:
         html_content = __convert_md_links_to_html_links(html_content)
         __add_html(msg, html_content)
-    if attachment_paths is not None:
-        if assert_unique_attachment_paths:
-            for path in attachment_paths:
-                assert_unique(path, "attachment_paths")
+    if attachment_paths:
         __add_attachments(msg, attachment_paths, plaintext_content)
     return msg
 
