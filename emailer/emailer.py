@@ -188,16 +188,22 @@ def __add_recipients(
         msg["Bcc"] = ", ".join(bcc_addresses)
 
 
-def __convert_md_links_to_html_links(html_content: str) -> str:
+def __convert_md_links_to_html_links(
+    html_content: str, image_width: str = "70%"
+) -> str:
     """Converts markdown url links and image links to html.
 
     Parameters
     ----------
     html_content : str
         The html content to be converted.
+    image_width : str
+        The width of the image, if the link is for an embedded image.
     """
     md_image_link_pattern = re.compile(r"!\[(.*?)\]\((.*?)\)")
-    html_content = md_image_link_pattern.sub(r'<img src="\2" alt="\1" />', html_content)
+    html_content = md_image_link_pattern.sub(
+        rf'<img src="\2" alt="\1" style="width:{image_width}" />', html_content
+    )
     md_link_pattern = re.compile(r"\[(.*?)\]\((.*?)\)")
     html_content = md_link_pattern.sub(r'<a href="\2">\1</a>', html_content)
     return html_content
