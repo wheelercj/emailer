@@ -140,7 +140,9 @@ def draft(
         The port to connect to. This function attempts to make an SSL
         connection.
     mailbox_name : str
-        The name of the mailbox to create the draft in.
+        The name of the mailbox to create the draft in. If you're not sure what
+        the mailbox name should be, try the default and a helpful error message
+        will be shown if needed.
     """
     ctx = ssl.create_default_context()
     with imaplib.IMAP4_SSL(email_server, email_port, ssl_context=ctx) as imap:
