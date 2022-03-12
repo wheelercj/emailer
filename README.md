@@ -12,7 +12,7 @@ An email client with a "Python user-interface" (no user interface) for maximum c
 
 ## usage
 
-Download the source code, and then install it as a local package with the terminal command `python3 -m pip install -e .` while in the same folder as the source code. This will also install the third party dependencies listed in `requirements.txt`. Now you can use `from emailer import emailer, contacts_` in other Python files saved anywhere on your computer. Be sure to avoid naming a Python file the same as one built into the Python language, such as `email.py`.
+Download the source code, and then install it as a local package with the terminal command `python3 -m pip install -e .` while in the same folder as the source code. This will also install the third party dependencies listed in `requirements.txt`. Now you can use `from emailer import emailer, contacts_` in other Python files saved anywhere on your computer. Be sure to avoid naming a Python file the same as one built into the Python language, such as `email.py`. I happen to use this with gmail; if you use a different email service provider, you will need to specify the email server and possibly the email port and mailbox name as explained in the `emailer.send` and `emailer.draft` docstrings.
 
 Below is a sample that shows how I use this package.
 
