@@ -2,6 +2,14 @@ from dataclasses import dataclass
 from typing import Iterator, Callable
 
 
+@dataclass
+class Contact:
+    first_name: str
+    last_name: str
+    email_address: str
+    group_name: str
+
+
 def load_from_str(
     contacts_: str, filter_predicate: Callable = None, delimiter: str = ","
 ) -> Iterator:
@@ -24,14 +32,6 @@ def load_from_str(
             fields[i] = field.strip()
         contacts_obj.append(Contact(*fields))
     return filter(filter_predicate, contacts_obj)
-
-
-@dataclass
-class Contact:
-    first_name: str
-    last_name: str
-    email_address: str
-    group_name: str
 
 
 class Contacts:
