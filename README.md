@@ -21,14 +21,16 @@ from emailer import emailer, contacts_
 import os
 from textwrap import dedent
 from dotenv import load_dotenv  # https://pypi.org/project/python-dotenv/
-
-
 load_dotenv()
+
+
 my_email_address = "my.email.address@gmail.com"
 # In this sample code, the contact info is fake.
 my_email_password = os.environ.get("EMAIL_PASSWORD")
+
+# The format of the contact info below is based entirely on the Contact
+# dataclass in contacts_.py, which you can change at any time.
 contacts_str = dedent(
-    # The format of the contact info below is based entirely on the Contact dataclass in contacts_.py, which you can change at any time.
     # first name, last name, email address, group name
     """\
     For, Testing, different.email@duck.com, me
@@ -43,7 +45,9 @@ contacts_str = dedent(
     Haleigh, Rios, publisher@icloud.com, member
     Charity, Parrish, language@yahoo.com, member
     """
-    # If you prefer, you could also keep the contact info in a separate file and use something in Python's versatile ecosystem to automatically load it.
+    # If you prefer, you could also keep the contact info in a separate file
+    # and use something in Python's versatile ecosystem to automatically load
+    # it.
 )
 
 subject = "This is the email's subject"
@@ -54,13 +58,18 @@ for recipient in recipients:
         f"""\
         Greetings {recipient.first_name},
 
-        This is a sample email. These can be written in markdown (like this one), HTML, or in plain text.
+        This is a sample email. These can be written in markdown (like this
+        one), HTML, or in plain text.
         
-        The first line of this email will show the correct first name for each recipient, and it's easy to add more info that's different for each person. Just add a variable to the Contact dataclass in contacts_.py and add to your list of contact info.
+        The first line of this email will show the correct first name for each
+        recipient, and it's easy to add more info that's different for each
+        person. Just add a variable to the Contact dataclass in contacts_.py
+        and add to your list of contact info.
 
         ## markdown syntax samples
 
-        All of these markdown elements will be converted to HTML and will look great in the final result, including:
+        All of these markdown elements will be converted to HTML and will look
+        great in the final result, including:
         
         * bullet points
         * [links to websites](https://zombo.com/)
@@ -71,7 +80,8 @@ for recipient in recipients:
         * tables
         * and more
         
-        Everything in markdown works, which includes basically everything commonly used in emails.
+        Everything in markdown works, which includes basically everything
+        commonly used in emails.
 
         1. The numbers for these numbered
         1. list items will be automatically
@@ -81,7 +91,8 @@ for recipient in recipients:
 
         ![alt text](C:/Users/chris/Pictures/an image.jpg)
 
-        I have also attached a file by adding its file path to the attachment_paths list, as you can see above this email.
+        I have also attached a file by adding its file path to the
+        attachment_paths list, as you can see above this email.
 
         Let me know if you have any questions or concerns!
 
@@ -89,7 +100,10 @@ for recipient in recipients:
         Chris Wheeler  
         christopher.wheeler.320@my.csun.edu  
         """
-        # If you use markdown and want multiple lines (that are not bullet points, ordered list items, etc.) next to each other like in the email signature, make sure you end each line with two (or more) spaces. Markdown removes the line breaks otherwise.
+        # If you use markdown and want multiple lines (that are not bullet
+        # points, ordered list items, etc.) next to each other like in the
+        # email signature, make sure you end each line with two (or more)
+        # spaces. Markdown removes the line breaks otherwise.
     )
 
     msg = emailer.create_email_message(
