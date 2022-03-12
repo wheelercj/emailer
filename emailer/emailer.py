@@ -39,60 +39,9 @@ import imghdr
 from email.message import EmailMessage
 from email.utils import make_msgid
 from typing import Optional
-from dotenv import load_dotenv  # https://pypi.org/project/python-dotenv/
 from mistune import markdown as HTMLConverter  # https://github.com/lepture/mistune
 from textwrap import dedent
 import sqlite3
-
-
-def __sample_use() -> None:
-    load_dotenv()
-    email_address = os.environ.get("EMAIL_ADDRESS")
-    email_password = os.environ.get("EMAIL_PASSWORD")
-
-    subject = "This is a sample email"
-    attachment_paths = []
-
-    to_addresses = [os.environ.get("RECIPIENT_ADDRESS")]
-    cc_addresses = []
-    bcc_addresses = []
-
-    plaintext_content = dedent(
-        f"""\
-        Hello,
-        
-        This is the plaintext content of the email.
-        """
-    )
-    md_content = dedent(
-        f"""\
-        # This is a sample email
-
-        This is the markdown content of the email.
-        """
-    )
-    html_content = dedent(
-        f"""\
-        <h1>Greetings!</h1>
-
-        <p>This is an email written with HTML.</p>
-        """
-    )
-
-    msg = create_email_message(
-        from_address=email_address,
-        subject=subject,
-        plaintext_content=plaintext_content,
-        md_content=md_content,
-        html_content=html_content,
-        attachment_paths=attachment_paths,
-        to_addresses=to_addresses,
-        cc_addresses=cc_addresses,
-        bcc_addresses=bcc_addresses,
-    )
-
-    # send(msg=msg, from_address=email_address, email_app_password=email_password)
-    draft(msg=msg, from_address=email_address, email_app_password=email_password)
 
 
 def __create_image_ids(num: int) -> list[str]:
