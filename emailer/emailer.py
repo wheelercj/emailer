@@ -44,17 +44,6 @@ from textwrap import dedent
 import sqlite3
 
 
-def __create_image_ids(num: int) -> list[str]:
-    """Makes a list of image IDs.
-
-    Parameters
-    ----------
-    num : int
-        The number of image IDs to make.
-    """
-    return [make_msgid() for _ in range(num)]
-
-
 def create_email_message(
     from_address: str,
     subject: str,
@@ -128,6 +117,220 @@ def create_email_message(
                 assert_unique(path, "attachment_paths")
         __add_attachments(msg, attachment_paths, plaintext_content)
     return msg
+
+
+def draft(
+    msg: EmailMessage,
+    from_address: str,
+    email_app_password: str,
+    email_server: str = "imap.gmail.com",
+    email_port: int = 993,
+    mailbox_name: str = "[Gmail]/Drafts",
+) -> None:
+    """Creates a draft email.
+
+    Parameters
+    ----------
+    msg : EmailMessage
+        The email message to create a draft of.
+    from_address : str
+        Your email address.
+    email_app_password : str
+        The app password to access your email account. For gmail, this is
+        different from your google password. To create a gmail app password, go
+        to https://myaccount.google.com/apppasswords. Multi-factor
+        authentication must be enabled to visit this site.
+    email_server : str
+        The email server to connect to.
+        Gmail: "imap.gmail.com"
+        Outlook.com/Hotmail.com: "imap-mail.outlook.com"
+        Yahoo Mail: "imap.mail.yahoo.com"
+        AT&T: "imap.mail.att.net"
+        Comcast: "imap.comcast.net"
+        Verizon: "incoming.verizon.net"
+    email_port : int
+        The port to connect to. This function attempts to make an SSL
+        connection.
+    mailbox_name : str
+        The name of the mailbox to create the draft in.
+    """
+    ctx = ssl.create_default_context()
+    with imaplib.IMAP4_SSL(email_server, email_port, ssl_context=ctx) as imap:
+        imap.login(from_address, email_app_password)
+        status, mailboxes = imap.list()
+        if status != "OK":
+            raise RuntimeError(f"Could not list mailboxes: {mailboxes}")
+        folder_list = [str(folder).split('"')[-2] for folder in mailboxes]
+        if mailbox_name not in folder_list:
+            raise ValueError(
+                f"The mailbox {mailbox_name} does not exist. "
+                f"Select one of the following: {folder_list}"
+            )
+        status, _ = imap.select(mailbox=mailbox_name, readonly=False)
+        if status != "OK":
+            raise RuntimeError(f"Could not select mailbox {mailbox_name}")
+        imap.append(
+            mailbox=mailbox_name,
+            flags="",
+            date_time=imaplib.Time2Internaldate(time.time()),
+            message=str(msg).encode("utf8"),
+        )
+    print("Draft created.")
+
+
+def send(
+    msg: EmailMessage,
+    from_address: str,
+    email_app_password: str,
+    log_file_path: str = "sent.log",
+    email_server: str = "smtp.gmail.com",
+    email_port: int = 465,
+) -> None:
+    """Immediately sends an email to the given recipient addresses.
+
+    Parameters
+    ----------
+    msg : EmailMessage
+        The email message to send.
+    from_address : str
+        Your email address.
+    email_app_password : str
+        The app password to access your email account. For gmail, this is
+        different from your google password. To create a gmail app password, go
+        to https://myaccount.google.com/apppasswords. Multi-factor
+        authentication must be enabled to visit this site.
+    log_file_path : str
+        The path to the log file for logging emails' subject, recipient(s), and
+        send time. Set this to an empty string, None, or False to disable
+        logging.
+    email_server : str
+        The email server to connect to.
+        Gmail: "smtp.gmail.com"
+        Outlook.com/Hotmail.com: "smtp-mail.outlook.com"
+        Yahoo Mail: "smtp.mail.yahoo.com"
+        AT&T: "smtp.mail.att.net"
+        Comcast: "smtp.comcast.net"
+        Verizon: "smtp.verizon.net"
+    email_port : int
+        The port to connect to. This function attempts to make an SSL
+        connection.
+    """
+    ctx = ssl.create_default_context()
+    with smtplib.SMTP_SSL(email_server, email_port, context=ctx) as smtp:
+        smtp.login(from_address, email_app_password)
+        smtp.send_message(msg)
+    if log_file_path:
+        log(msg, log_file_path)
+    __print_recipient_addresses(msg)
+
+
+def assert_unique(
+    text: str, key: str, database_path: str = "unique_strings.db"
+) -> None:
+    """Asserts that the given text has not been used before with the given key.
+
+    Parameters
+    ----------
+    text : str
+        The text to check and save.
+    key : str
+        The category of the text.
+    database_path : str
+        The path to the database file. A table named "unique_strings" will be
+        created if it does not exist.
+    """
+    with sqlite3.connect(database_path) as con:
+        cur = con.cursor()
+        cur.execute(
+            """CREATE TABLE IF NOT EXISTS unique_strings (
+            id INTEGER PRIMARY KEY,
+            key TEXT,
+            text TEXT
+            )"""
+        )
+        cur.execute(
+            """SELECT *
+            FROM unique_strings
+            WHERE key = ?
+            AND text = ?""",
+            (key, text),
+        )
+        if cur.fetchall():
+            raise RuntimeError(f'"{text}" has already been used as a {key}')
+        cur.execute(
+            """INSERT INTO unique_strings
+            (key, text)
+            VALUES (?, ?)""",
+            (key, text),
+        )
+
+
+def log(msg: EmailMessage, log_file_path: str) -> None:
+    """Logs an email's recipient(s), subject, and send time to a file.
+
+    Parameters
+    ----------
+    msg : EmailMessage
+        The email message to log.
+    log_file : str
+        The path to the log file.
+    """
+    now = datetime.now()
+    with open(log_file_path, "a") as file:
+        file.write(
+            dedent(
+                f"""\
+                {now.strftime('%Y-%m-%d %H:%M:%S')} - {msg['Subject']}
+                \tTo: {msg['To']}
+                \tCC: {msg['Cc']}
+                \tBCC: {msg['Bcc']}
+                """
+            )
+        )
+
+
+def load_html(file_path: str) -> str:
+    """Loads an html file and returns its contents.
+
+    Parameters
+    ----------
+    file_path : str
+        The path to the html file.
+
+    Returns
+    -------
+    str
+        The contents of the html file.
+    """
+    with open(file_path, "r", encoding="utf8") as f:
+        return f.read()
+
+
+def localhost_send(msg: EmailMessage) -> None:
+    """Immediately sends an email to a mail server on localhost.
+
+    The mail server can be started with the following command:
+    $ python3 -m smtpd -c DebuggingServer -n localhost:1025
+
+    Parameters
+    ----------
+    msg : EmailMessage
+        The email message to send.
+    """
+    with smtplib.SMTP("localhost", 1025) as smtp:
+        smtp.send_message(msg)
+    print("Email sent to localhost.")
+
+
+def __print_recipient_addresses(msg: EmailMessage) -> None:
+    """Prints all recipient addresses."""
+    print("Email sent")
+    if msg["To"]:
+        print(f'\tto: {msg["To"]}')
+    if msg["Cc"]:
+        print(f'\tCC: {msg["Cc"]}')
+    if msg["Bcc"]:
+        print(f'\tBCC: {msg["Bcc"]}')
 
 
 def __add_recipients(
@@ -328,215 +531,12 @@ def __convert_image_links(html_content: str) -> tuple[str, list[str], list[str]]
     return html_content, embedded_image_paths, image_ids
 
 
-def draft(
-    msg: EmailMessage,
-    from_address: str,
-    email_app_password: str,
-    email_server: str = "imap.gmail.com",
-    email_port: int = 993,
-    mailbox_name: str = "[Gmail]/Drafts",
-) -> None:
-    """Creates a draft email.
+def __create_image_ids(num: int) -> list[str]:
+    """Makes a list of image IDs.
 
     Parameters
     ----------
-    msg : EmailMessage
-        The email message to create a draft of.
-    from_address : str
-        Your email address.
-    email_app_password : str
-        The app password to access your email account. For gmail, this is
-        different from your google password. To create a gmail app password, go
-        to https://myaccount.google.com/apppasswords. Multi-factor
-        authentication must be enabled to visit this site.
-    email_server : str
-        The email server to connect to.
-        Gmail: "imap.gmail.com"
-        Outlook.com/Hotmail.com: "imap-mail.outlook.com"
-        Yahoo Mail: "imap.mail.yahoo.com"
-        AT&T: "imap.mail.att.net"
-        Comcast: "imap.comcast.net"
-        Verizon: "incoming.verizon.net"
-    email_port : int
-        The port to connect to. This function attempts to make an SSL
-        connection.
-    mailbox_name : str
-        The name of the mailbox to create the draft in.
+    num : int
+        The number of image IDs to make.
     """
-    ctx = ssl.create_default_context()
-    with imaplib.IMAP4_SSL(email_server, email_port, ssl_context=ctx) as imap:
-        imap.login(from_address, email_app_password)
-        status, mailboxes = imap.list()
-        if status != "OK":
-            raise RuntimeError(f"Could not list mailboxes: {mailboxes}")
-        folder_list = [str(folder).split('"')[-2] for folder in mailboxes]
-        if mailbox_name not in folder_list:
-            raise ValueError(
-                f"The mailbox {mailbox_name} does not exist. "
-                f"Select one of the following: {folder_list}"
-            )
-        status, _ = imap.select(mailbox=mailbox_name, readonly=False)
-        if status != "OK":
-            raise RuntimeError(f"Could not select mailbox {mailbox_name}")
-        imap.append(
-            mailbox=mailbox_name,
-            flags="",
-            date_time=imaplib.Time2Internaldate(time.time()),
-            message=str(msg).encode("utf8"),
-        )
-    print("Draft created.")
-
-
-def send(
-    msg: EmailMessage,
-    from_address: str,
-    email_app_password: str,
-    log_file_path: str = "sent.log",
-    email_server: str = "smtp.gmail.com",
-    email_port: int = 465,
-) -> None:
-    """Immediately sends an email to the given recipient addresses.
-
-    Parameters
-    ----------
-    msg : EmailMessage
-        The email message to send.
-    from_address : str
-        Your email address.
-    email_app_password : str
-        The app password to access your email account. For gmail, this is
-        different from your google password. To create a gmail app password, go
-        to https://myaccount.google.com/apppasswords. Multi-factor
-        authentication must be enabled to visit this site.
-    log_file_path : str
-        The path to the log file for logging emails' subject, recipient(s), and
-        send time. Set this to an empty string, None, or False to disable
-        logging.
-    email_server : str
-        The email server to connect to.
-        Gmail: "smtp.gmail.com"
-        Outlook.com/Hotmail.com: "smtp-mail.outlook.com"
-        Yahoo Mail: "smtp.mail.yahoo.com"
-        AT&T: "smtp.mail.att.net"
-        Comcast: "smtp.comcast.net"
-        Verizon: "smtp.verizon.net"
-    email_port : int
-        The port to connect to. This function attempts to make an SSL
-        connection.
-    """
-    ctx = ssl.create_default_context()
-    with smtplib.SMTP_SSL(email_server, email_port, context=ctx) as smtp:
-        smtp.login(from_address, email_app_password)
-        smtp.send_message(msg)
-    if log_file_path:
-        log(msg, log_file_path)
-    __print_recipient_addresses(msg)
-
-
-def __print_recipient_addresses(msg: EmailMessage) -> None:
-    """Prints all recipient addresses."""
-    print("Email sent")
-    if msg["To"]:
-        print(f'\tto: {msg["To"]}')
-    if msg["Cc"]:
-        print(f'\tCC: {msg["Cc"]}')
-    if msg["Bcc"]:
-        print(f'\tBCC: {msg["Bcc"]}')
-
-
-def assert_unique(
-    text: str, key: str, database_path: str = "unique_strings.db"
-) -> None:
-    """Asserts that the given text has not been used before with the given key.
-
-    Parameters
-    ----------
-    text : str
-        The text to check and save.
-    key : str
-        The category of the text.
-    database_path : str
-        The path to the database file. A table named "unique_strings" will be
-        created if it does not exist.
-    """
-    with sqlite3.connect(database_path) as con:
-        cur = con.cursor()
-        cur.execute(
-            """CREATE TABLE IF NOT EXISTS unique_strings (
-            id INTEGER PRIMARY KEY,
-            key TEXT,
-            text TEXT
-            )"""
-        )
-        cur.execute(
-            """SELECT *
-            FROM unique_strings
-            WHERE key = ?
-            AND text = ?""",
-            (key, text),
-        )
-        if cur.fetchall():
-            raise RuntimeError(f'"{text}" has already been used as a {key}')
-        cur.execute(
-            """INSERT INTO unique_strings
-            (key, text)
-            VALUES (?, ?)""",
-            (key, text),
-        )
-
-
-def log(msg: EmailMessage, log_file_path: str) -> None:
-    """Logs an email's recipient(s), subject, and send time to a file.
-
-    Parameters
-    ----------
-    msg : EmailMessage
-        The email message to log.
-    log_file : str
-        The path to the log file.
-    """
-    now = datetime.now()
-    with open(log_file_path, "a") as file:
-        file.write(
-            dedent(
-                f"""\
-                {now.strftime('%Y-%m-%d %H:%M:%S')} - {msg['Subject']}
-                \tTo: {msg['To']}
-                \tCC: {msg['Cc']}
-                \tBCC: {msg['Bcc']}
-                """
-            )
-        )
-
-
-def load_html(file_path: str) -> str:
-    """Loads an html file and returns its contents.
-
-    Parameters
-    ----------
-    file_path : str
-        The path to the html file.
-
-    Returns
-    -------
-    str
-        The contents of the html file.
-    """
-    with open(file_path, "r", encoding="utf8") as f:
-        return f.read()
-
-
-def localhost_send(msg: EmailMessage) -> None:
-    """Immediately sends an email to a mail server on localhost.
-
-    The mail server can be started with the following command:
-    $ python3 -m smtpd -c DebuggingServer -n localhost:1025
-
-    Parameters
-    ----------
-    msg : EmailMessage
-        The email message to send.
-    """
-    with smtplib.SMTP("localhost", 1025) as smtp:
-        smtp.send_message(msg)
-    print("Email sent to localhost.")
+    return [make_msgid() for _ in range(num)]
