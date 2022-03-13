@@ -58,6 +58,8 @@ def load_from_str(
     """
     contacts_obj = Contacts()
     for line in contacts_.splitlines():
+        if not line:
+            continue
         fields = line.split(delimiter)
         for i, field in enumerate(fields):
             fields[i] = field.strip()
