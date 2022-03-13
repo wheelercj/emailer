@@ -6,7 +6,7 @@ An email client with a "Python user-interface" (no user interface) for maximum c
 
 * Write emails in an f-string with either markdown, plain text, or HTML.
 * Files are easy to attach and images are easy to embed.
-* Quickly convert contact info from a CSV string to Python objects with `contacts.load_from_str`, or customize the function to work with other formats in seconds.
+* Quickly load contact info from one of many file formats or string formats into Python objects.
 * Be confident and write emails fast. You can use `emailer.assert_unique` to raise an exception if you accidentally reuse a subject, attachment name, or any other string, even between runs.
 * The code is easy to read and change. Type hints and docstrings are used almost everywhere possible, and the code has been auto-formatted with Black.
 
@@ -45,9 +45,9 @@ contacts_str = dedent(
     Haleigh, Rios, publisher@icloud.com, member
     Charity, Parrish, language@yahoo.com, member
     """
-    # If you prefer, you could also keep the contact info in a separate file
-    # and use something in Python's versatile ecosystem to automatically load
-    # it.
+    # If you prefer, you could instead keep the contact info in an XLSX, CSV,
+    # or TSV file and load it with the appropriate function listed below in
+    # place of `contacts.load_from_str`.
 )
 
 subject = "This is the email's subject"
@@ -132,7 +132,13 @@ for recipient in recipients:
 
 ## public functions
 
-**contacts.load_from_str** - Loads contacts from a string. By default, each contact must be on its own line and must contain the comma-separated data specified in the Contact class (in contacts.py). A filter predicate can be provided to filter out some contacts.
+**contacts.load_from_xlsx** - Loads contacts from an XLSX file. The order of the columns in the file must be the same as the order of the variables in the Contact class (you can just rearrange the Contact class if needed). By default, the first row of the file is ignored.
+
+**contacts.load_from_csv** - Loads contacts from a CSV file.
+
+**contacts.load_from_tsv** - Loads contacts from a TSV file.
+
+**contacts.load_from_str** - Loads contacts from a string. By default, each contact must be on its own line and must contain the comma-separated data specified in the Contact class (in contacts.py). A filter predicate can be provided to filter out some contacts. The delimiter is easy to change from commas to anything else.
 
 **emailer.create_email_message** - Creates an email message object.
 
