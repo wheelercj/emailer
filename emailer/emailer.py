@@ -1,32 +1,3 @@
-"""Send emails or create drafts of emails.
-
-Functions
----------
-create_email_message
-    Creates an email message object.
-draft
-    Creates a draft email using an email message object.
-send
-    Creates and sends an email using an email message object. By default, the
-    email's send time, subject, and recipient(s) are logged to a file named
-    ``sent.log``.
-assert_unique
-    Asserts that the given text has not been used before with the given key.
-    Given strings are saved to a local sqlite3 database file named
-    ``unique_strings.db``. If the same two strings are given again, an
-    exception is raised.
-log
-    Logs the current time and the recipient(s) and subject of an email message
-    object.
-load_html
-    Loads an html file and returns its contents.
-localhost_send
-    Sends an email using an email object to localhost for testing.
-"""
-# TODO: embedding images does not work for drafts. Maybe use the Gmail
-# API to handle Gmail drafts.
-
-
 from __future__ import annotations
 import re
 import time
@@ -41,6 +12,8 @@ from typing import Optional
 from mistune import markdown as HTMLConverter  # https://github.com/lepture/mistune
 from textwrap import dedent
 import sqlite3
+# TODO: embedding images does not work for drafts. Maybe use the Gmail
+# API to handle Gmail drafts.
 
 
 def create_email_message(
@@ -226,8 +199,13 @@ def assert_unique(
     key : str
         The category of the text.
     database_path : str
-        The path to the database file. A table named "unique_strings" will be
-        created if it does not exist.
+        The path to the local database file. A table named "unique_strings"
+        will be created if it does not exist.
+
+    Raises
+    ------
+    RuntimeError
+        If the text has already been used with the given key.
     """
     with sqlite3.connect(database_path) as con:
         cur = con.cursor()
