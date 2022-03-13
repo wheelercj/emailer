@@ -1,6 +1,6 @@
 # emailer
 
-An email client with a "Python user-interface" (no user interface) for maximum customizability in how you send and draft emails. Those who already know Python will find this much easier to use than Mail Merge.
+An email client with a "Python user interface" (no user interface) for maximum customizability in how you send and draft emails. Those who already know Python will find this much easier to use than Mail Merge.
 
 ## features
 
