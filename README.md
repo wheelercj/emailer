@@ -2,6 +2,8 @@
 
 Send emails like it's "the future". This email client has a Python user interface (no user interface) for maximum customizability in how you send and draft emails. Those who already know Python will find this much easier to use than both Mail Merge and Python's built-in emailing tools.
 
+Install with `pip install futuremail`. See the source code here: [github.com/wheelercj/futuremail](https://github.com/wheelercj/futuremail).
+
 ## features
 
 * Write emails in a string with either markdown, plain text, or HTML. Markdown gets converted to HTML.
@@ -57,7 +59,7 @@ with Sender(my_email_address, my_email_password) as sender:
 
 ## usage
 
-Download the source code, and then install it as a local package with the terminal command `python3 -m pip install -e .` while in the same folder as the source code. This will also install the third party dependencies listed in `requirements.txt`. Now you can import futuremail in other Python files saved anywhere on your computer. Be sure to avoid naming a Python file the same as one built into the Python language, such as `email.py`. I happen to use this with gmail; if you use a different email service provider, you will need to specify the email server and possibly the email port as explained in the docstrings.
+Install with `pip install futuremail`. Be sure to avoid naming any of your Python files the same as one built into the Python language, such as `email.py`. I happen to use this with gmail; if you use a different email service provider, you will need to specify the email server and possibly the email port as explained in the docstrings.
 
 ## public functions and classes
 
