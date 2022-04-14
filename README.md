@@ -2,7 +2,7 @@
 
 Send emails like it's "the future". This email client has a Python user interface (no user interface) for maximum customizability in how you send and draft emails. Those who already know Python will find this much easier to use than both Mail Merge and Python's built-in emailing tools.
 
-Install with `pip install futuremail`. See the source code here: [github.com/wheelercj/futuremail](https://github.com/wheelercj/futuremail).
+Install with `pip install futuremail`. See the source code here: [github.com/wheelercj/futuremail](https://github.com/wheelercj/futuremail). Be sure to avoid naming any of your Python files the same as one built into the Python language, such as `email.py`.
 
 ## features
 
@@ -10,6 +10,7 @@ Install with `pip install futuremail`. See the source code here: [github.com/whe
 * Files are easy to attach and images are easy to embed.
 * Quickly load contacts. Many file types and string formats are supported.
 * Be confident. You can use `futuremail.assert_unique` to raise an exception if you accidentally reuse something between runs, and futuremail can often detect other common mistakes like forgetting to attach a file.
+* Settings such as email server, email port, etc. are usually detected automatically.
 * The code is easy to read and change. Type hints and docstrings are used almost everywhere possible, and the code has been auto-formatted with Black.
 
 Here is a small example, and a more comprehensive one is at the end of this page.
@@ -56,10 +57,6 @@ with Sender(my_email_address, my_email_password) as sender:
 
         sender.send(msg)
 ```
-
-## usage
-
-Install with `pip install futuremail`. Be sure to avoid naming any of your Python files the same as one built into the Python language, such as `email.py`. I happen to use this with gmail; if you use a different email service provider, you will need to specify the email server and possibly the email port as explained in the docstrings.
 
 ## public functions and classes
 

@@ -3,6 +3,7 @@ from .utils import log
 from email.message import EmailMessage
 import smtplib
 import ssl
+from typing import Optional
 
 
 class Sender:
@@ -11,8 +12,8 @@ class Sender:
         from_address: str,
         email_app_password: str,
         log_file_path: str = "sent.log",
-        email_server: str = "smtp.gmail.com",
-        email_port: int = 465,
+        email_server: Optional[str] = None,
+        email_port: Optional[int] = None,
     ) -> None:
         """Creates a context manager for sending emails.
 
@@ -29,23 +30,23 @@ class Sender:
             The path to the log file for logging emails' subject, recipient(s),
             and send time. Set this to an empty string, None, or False to
             disable logging.
-        email_server : str
-            The email server to connect to.
-            Gmail: "smtp.gmail.com"
-            Outlook.com/Hotmail.com: "smtp-mail.outlook.com"
-            Yahoo Mail: "smtp.mail.yahoo.com"
-            AT&T: "smtp.mail.att.net"
-            Comcast: "smtp.comcast.net"
-            Verizon: "smtp.verizon.net"
-        email_port : int
-            The port to connect to. This function attempts to make an SSL
-            connection.
+        email_server : Optional[str]
+            The email server to connect to. This will usually be automatically
+            determined from your email address.
+        email_port : Optional[int]
+            The port to connect to. This will usually be automatically
+            determined from your email address. An SSL connection will be
+            attempted.
         """
         self.from_address = from_address
         self.email_app_password = email_app_password
         self.log_file_path = log_file_path
         self.email_server = email_server
+        if not self.email_server:
+            self.email_server = self.__get_email_server(self.from_address)
         self.email_port = email_port
+        if not self.email_port:
+            self.email_port = self.__get_email_port(self.email_server)
 
     def __enter__(self) -> Sender:
         ctx = ssl.create_default_context()
@@ -87,3 +88,104 @@ class Sender:
             print(f'\tCC: {msg["Cc"]}')
         if msg["Bcc"]:
             print(f'\tBCC: {msg["Bcc"]}')
+
+    def __get_email_server(self, email_address: str) -> str:
+        """Attempts to get the correct email server from an email address."""
+        domain = email_address.split("@")[1]
+        if domain == "1and1.com":
+            return "smtp.1and1.com"
+        elif domain == "1und1.de":
+            return "smtp.1und1.de"
+        elif domain == "aol.com":
+            return "smtp.aol.com"
+        elif domain == "att.yahoo.com":
+            return "smtp.att.yahoo.com"
+        elif domain == "au.yahoo.com":
+            return "smtp.mail.yahoo.com.au"
+        elif domain == "btinternet.com":
+            return "mail.btinternet.com"
+        elif domain == "btopenworld.com":
+            return "mail.btopenworld.com"
+        elif domain == "comcast.net":
+            return "smtp.comcast.net"
+        elif domain == "csun.edu":
+            return "smtp.live.com"
+        elif domain == "gmail.com":
+            return "smtp.gmail.com"
+        elif domain == "gmx.com":
+            return "smtp.gmx.com"
+        elif domain == "icloud.com":
+            return "smtp.mail.me.com"
+        elif domain == "laccd.edu":
+            return "smtp.live.com"
+        elif domain == "lavc.edu":
+            return "smtp.live.com"
+        elif domain == "live.com":
+            return "smtp.live.com"
+        elif domain == "mail.com":
+            return "smtp.mail.com"
+        elif domain == "my.csun.edu":
+            return "smtp.gmail.com"
+        elif domain == "ntlworld.com":
+            return "smtp.ntlworld.com"
+        elif domain == "o2.co.uk":
+            return "o2.co.uk"
+        elif domain == "o2.ie":
+            return "smtp.o2.ie"
+        elif domain == "o2online.de":
+            return "mail.o2online.de"
+        elif domain == "office365.com":
+            return "smtp.office365.com"
+        elif domain == "orange.net":
+            return "smtp.orange.net"
+        elif domain == "outlook.com":
+            return "smtp.live.com"
+        elif domain == "postoffice.net":
+            return "smtp.postoffice.net"
+        elif domain == "privateemail.com":
+            return "mail.privateemail.com"
+        elif domain == "secureserver.net":
+            return "smtpout.secureserver.net"
+        elif domain == "student.laccd.edu":
+            return "smtp.live.com"
+        elif domain == "t-online.de":
+            return "t-online.de"
+        elif domain == "verizon.net":
+            return "outgoing.verizon.net"
+        elif domain == "yahoo.co.uk":
+            return "smtp.mail.yahoo.co.uk"
+        elif domain == "yahoo.com":
+            return "smtp.mail.yahoo.com"
+        elif domain == "zoho.com":
+            return "smtp.zoho.com"
+        else:
+            raise ValueError(f"Could not determine email server from {email_address}.")
+
+    def __get_email_port(self, email_server: str) -> int:
+        """Attempts to get the correct email port from an email server."""
+        if email_server in (
+            "mail.btinternet.com",
+            "mail.btopenworld.com",
+            "mail.o2online.de",
+            "smtp.o2.co.uk",
+            "smtp.o2.ie",
+            "smtp.orange.co.uk",
+            "smtp.orange.net",
+            "smtp.wanadoo.co.uk",
+        ):
+            return 25
+        if email_server in (
+            "mail.privateemail.com",
+            "outgoing.yahoo.verizon.net",
+            "securesmtp.t-online.de",
+            "smtp.1and1.com",
+            "smtp.1und1.de",
+            "smtp.aol.com",
+            "smtp.comcast.net",
+            "smtp.mail.com",
+            "smtp.mail.me.com",
+            "smtp.office365.com",
+            "smtpout.secureserver.net",
+        ):
+            return 587
+        return 465

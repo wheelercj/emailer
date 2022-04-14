@@ -1,7 +1,9 @@
+from __future__ import annotations
 from email.message import EmailMessage
 import imaplib
 import ssl
 import time
+from typing import Optional
 
 
 # TODO: embedding images does not work for drafts for some reason. Maybe use
@@ -13,8 +15,8 @@ class Drafter:
         self,
         from_address: str,
         email_app_password: str,
-        email_server: str = "imap.gmail.com",
-        mailbox_name: str = "[Gmail]/Drafts",
+        email_server: Optional[str] = None,
+        mailbox_name: Optional[str] = None,
         email_port: int = 993,
     ):
         """Creates a context manager for creating email drafts.
@@ -28,26 +30,25 @@ class Drafter:
             different from your google password. To create a gmail app
             password, go to https://myaccount.google.com/apppasswords.
             Multi-factor authentication must be enabled to visit this site.
-        email_server : str
-            The email server to connect to.
-            Gmail: "imap.gmail.com"
-            Outlook.com/Hotmail.com: "imap-mail.outlook.com"
-            Yahoo Mail: "imap.mail.yahoo.com"
-            AT&T: "imap.mail.att.net"
-            Comcast: "imap.comcast.net"
-            Verizon: "incoming.verizon.net"
-        mailbox_name : str
-            The name of the mailbox to create the draft in. If you're not sure
-            what the mailbox name should be, try the default and a helpful
+        email_server : Optional[str]
+            The email server to connect to. This will usually be automatically
+            determined from your email address.
+        mailbox_name : Optional[str]
+            The name of the mailbox to create the draft in. This will usually
+            be automatically determined from your email address. If you're not
+            sure what the mailbox name should be, try the default and a helpful
             error message will be shown if needed.
         email_port : int
-            The port to connect to. This function attempts to make an SSL
-            connection.
+            The port to connect to. An SSL connection will be attempted.
+            Apparently all email servers use the same port for SSL IMAP?
         """
         self.from_address = from_address
         self.email_app_password = email_app_password
         self.email_server = email_server
+        if not self.email_server:
+            self.email_server = self.__get_email_server(self.from_address)
         self.mailbox_name = mailbox_name
+        self.__mailbox_folder_list = None
         self.email_port = email_port
 
     def __enter__(self) -> "Drafter":
@@ -55,19 +56,12 @@ class Drafter:
             self.email_server, self.email_port, ssl_context=ssl.create_default_context()
         )
         self.imap.login(self.from_address, self.email_app_password)
-        status, mailboxes = self.imap.list()
-        if status != "OK":
-            if self.imap:
-                self.imap.close()
-            raise RuntimeError(f"Could not list mailboxes: {mailboxes}")
-        folder_list = [str(folder).split('"')[-2] for folder in mailboxes]
-        if self.mailbox_name not in folder_list:
-            if self.imap:
-                self.imap.close()
-            raise ValueError(
-                f"The mailbox {self.mailbox_name} does not exist. "
-                f"Select one of the following: {folder_list}"
+        self.__mailbox_folder_list = self.__get_mailbox_folder_list(self.imap)
+        if not self.mailbox_name:
+            self.mailbox_name = self.__get_mailbox_name(
+                self.email_server, self.__mailbox_folder_list
             )
+        self.__validate_mailbox_name(self.mailbox_name, self.__mailbox_folder_list)
         status, _ = self.imap.select(mailbox=self.mailbox_name, readonly=False)
         if status != "OK":
             if self.imap:
@@ -96,3 +90,58 @@ class Drafter:
             message=str(msg).encode("utf8"),
         )
         print("Draft created.")
+
+    def __get_email_server(self, email_address: str) -> str:
+        """Attempts to get the correct email server from an email address."""
+        domain = email_address.split("@")[-1]
+        if domain == "gmail.com":
+            return "imap.gmail.com"
+        elif domain == "yahoo.com":
+            return "imap.mail.yahoo.com"
+        elif domain == "outlook.com":
+            return "imap-mail.outlook.com"
+        elif domain == "live.com":
+            return "imap-mail.outlook.com"
+        elif domain == "hotmail.com":
+            return "imap-mail.outlook.com"
+        elif domain == "icloud.com":
+            return "imap.mail.me.com"
+        elif domain == "aol.com":
+            return "imap.aol.com"
+        elif domain == "comcast.net":
+            return "imap.comcast.net"
+        elif domain == "verizon.net":
+            return "incoming.verizon.net"
+        elif domain == "att.net":
+            return "imap.mail.att.net"
+        else:
+            raise ValueError(
+                f"Could not determine email server from email address {email_address}"
+            )
+
+    def __get_mailbox_name(
+        self, email_server: str, mailbox_folder_list: list[str]
+    ) -> str:
+        """Attempts to get the correct mailbox name."""
+        if email_server == "imap.gmail.com":
+            return "[Gmail]/Drafts"
+        for folder in mailbox_folder_list:
+            if "draft" in folder.lower():
+                return folder
+
+    def __validate_mailbox_name(
+        self, mailbox_name: str, mailbox_folder_list: list[str]
+    ) -> None:
+        if mailbox_name not in mailbox_folder_list:
+            raise ValueError(
+                f"The mailbox {self.mailbox_name} does not exist. "
+                f"Select one of the following: {mailbox_folder_list}"
+            )
+
+    def __get_mailbox_folder_list(imap) -> list[str]:
+        status, mailboxes = imap.list()
+        if status != "OK":
+            raise RuntimeError(
+                f"Could not connect to the email server to list the mailboxes."
+            )
+        return [str(folder).split('"')[-2] for folder in mailboxes]
