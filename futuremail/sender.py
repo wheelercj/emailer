@@ -6,6 +6,13 @@ import ssl
 from typing import Optional
 
 
+# TODO: make this async
+# https://realpython.com/python-with-statement/#creating-an-asynchronous-context-manager
+# https://docs.python.org/3/library/asyncio.html
+# https://docs.python.org/3/library/asyncio-api-index.html
+# https://docs.python.org/3/library/asyncio-task.html#asyncio-example-gather
+
+
 class Sender:
     def __init__(
         self,
