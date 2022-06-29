@@ -113,7 +113,7 @@ contacts_str = dedent(
     Charity, Parrish, language@yahoo.com, member
     """
     # If you prefer, you could instead keep the contact info in an XLSX, CSV,
-    # or TSV file and load it with the appropriate function listed below in
+    # or TSV file and load it with the appropriate futuremail load function in
     # place of `contacts.load_from_str`.
 )
 
