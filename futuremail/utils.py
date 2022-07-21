@@ -1,8 +1,8 @@
+import smtplib
+import sqlite3
 from datetime import datetime
 from email.message import EmailMessage
 from textwrap import dedent
-import smtplib
-import sqlite3
 
 
 def assert_unique(

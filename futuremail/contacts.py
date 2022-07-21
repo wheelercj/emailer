@@ -1,5 +1,7 @@
 from dataclasses import dataclass
-from typing import Iterator, Callable
+from typing import Callable
+from typing import Iterator
+
 import openpyxl  # https://pypi.org/project/openpyxl/
 
 
@@ -120,7 +122,7 @@ class Contacts:
     def append(self, new_contact: Contact) -> None:
         self.data.append(new_contact)
 
-    def __iter__(self) -> iter:
+    def __iter__(self) -> Iterator:
         return iter(self.data)
 
     def __len__(self) -> int:

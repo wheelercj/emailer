@@ -1,9 +1,10 @@
+import imghdr
+import re
 from email.message import EmailMessage
 from email.utils import make_msgid
-import imghdr
-from mistune import markdown as HTMLConverter  # https://github.com/lepture/mistune
-import re
 from typing import Optional
+
+from mistune import markdown as HTMLConverter  # https://github.com/lepture/mistune
 
 
 def create_email_message(
@@ -58,13 +59,13 @@ def create_email_message(
     if not plaintext_content:
         raise ValueError("plaintext_content must be given")
     msg.set_content(plaintext_content)
-    if md_content is not None:
-        html_content = HTMLConverter(md_content)
-        html_content = __convert_md_links_to_html_links(html_content)
-        __add_html(msg, html_content)
+    if html_content is None and md_content is not None:
+        html_content_s = HTMLConverter(md_content)
+        html_content_s = __convert_md_links_to_html_links(html_content_s)
+        __add_html(msg, html_content_s)
     elif html_content is not None:
-        html_content = __convert_md_links_to_html_links(html_content)
-        __add_html(msg, html_content)
+        html_content_s = __convert_md_links_to_html_links(html_content)
+        __add_html(msg, html_content_s)
     if attachment_paths:
         __add_attachments(msg, attachment_paths, plaintext_content)
     return msg

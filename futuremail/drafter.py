@@ -1,8 +1,9 @@
 from __future__ import annotations
-from email.message import EmailMessage
+
 import imaplib
 import ssl
 import time
+from email.message import EmailMessage
 from typing import Optional
 
 
@@ -44,23 +45,18 @@ class Drafter:
         """
         self.from_address = from_address
         self.email_app_password = email_app_password
-        self.email_server = email_server
-        if not self.email_server:
-            self.email_server = self.__get_email_server(self.from_address)
-        self.mailbox_name = mailbox_name
-        self.__mailbox_folder_list = None
         self.email_port = email_port
-
-    def __enter__(self) -> "Drafter":
+        self.email_server = email_server or self.__get_email_server(self.from_address)
         self.imap = imaplib.IMAP4_SSL(
             self.email_server, self.email_port, ssl_context=ssl.create_default_context()
         )
         self.imap.login(self.from_address, self.email_app_password)
         self.__mailbox_folder_list = self.__get_mailbox_folder_list(self.imap)
-        if not self.mailbox_name:
-            self.mailbox_name = self.__get_mailbox_name(
-                self.email_server, self.__mailbox_folder_list
-            )
+        self.mailbox_name = mailbox_name or self.__get_mailbox_name(
+            self.email_server, self.__mailbox_folder_list
+        )
+
+    def __enter__(self) -> "Drafter":
         self.__validate_mailbox_name(self.mailbox_name, self.__mailbox_folder_list)
         status, _ = self.imap.select(mailbox=self.mailbox_name, readonly=False)
         if status != "OK":
@@ -87,7 +83,7 @@ class Drafter:
             mailbox=self.mailbox_name,
             flags="",
             date_time=imaplib.Time2Internaldate(time.time()),
-            message=str(msg).encode("utf8"),
+            message=str(msg).encode("utf8"),  # type: ignore
         )
         print("Draft created.")
 
@@ -114,10 +110,9 @@ class Drafter:
             return "incoming.verizon.net"
         elif domain == "att.net":
             return "imap.mail.att.net"
-        else:
-            raise ValueError(
-                f"Could not determine email server from email address {email_address}"
-            )
+        raise ValueError(
+            f"Could not determine email server from email address {email_address}"
+        )
 
     def __get_mailbox_name(
         self, email_server: str, mailbox_folder_list: list[str]
@@ -128,6 +123,10 @@ class Drafter:
         for folder in mailbox_folder_list:
             if "draft" in folder.lower():
                 return folder
+        raise ValueError(
+            "Could not determine the mailbox name from the email server and/or the"
+            " mailbox folder list."
+        )
 
     def __validate_mailbox_name(
         self, mailbox_name: str, mailbox_folder_list: list[str]
@@ -138,10 +137,10 @@ class Drafter:
                 f"Select one of the following: {mailbox_folder_list}"
             )
 
-    def __get_mailbox_folder_list(imap) -> list[str]:
+    def __get_mailbox_folder_list(self, imap) -> list[str]:
         status, mailboxes = imap.list()
         if status != "OK":
             raise RuntimeError(
-                f"Could not connect to the email server to list the mailboxes."
+                "Could not connect to the email server to list the mailboxes."
             )
         return [str(folder).split('"')[-2] for folder in mailboxes]

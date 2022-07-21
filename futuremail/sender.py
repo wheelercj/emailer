@@ -1,9 +1,11 @@
 from __future__ import annotations
-from .utils import log
-from email.message import EmailMessage
+
 import smtplib
 import ssl
+from email.message import EmailMessage
 from typing import Optional
+
+from .utils import log
 
 
 # TODO: make this async
@@ -48,12 +50,8 @@ class Sender:
         self.from_address = from_address
         self.email_app_password = email_app_password
         self.log_file_path = log_file_path
-        self.email_server = email_server
-        if not self.email_server:
-            self.email_server = self.__get_email_server(self.from_address)
-        self.email_port = email_port
-        if not self.email_port:
-            self.email_port = self.__get_email_port(self.email_server)
+        self.email_server = email_server or self.__get_email_server(self.from_address)
+        self.email_port = email_port or self.__get_email_port(self.email_server)
 
     def __enter__(self) -> Sender:
         ctx = ssl.create_default_context()
