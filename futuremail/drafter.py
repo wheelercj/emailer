@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import imaplib
+import json
 import ssl
 import time
 from email.message import EmailMessage
@@ -89,30 +90,9 @@ class Drafter:
 
     def __get_email_server(self, email_address: str) -> str:
         """Attempts to get the correct email server from an email address."""
-        domain = email_address.split("@")[-1]
-        if domain == "gmail.com":
-            return "imap.gmail.com"
-        elif domain == "yahoo.com":
-            return "imap.mail.yahoo.com"
-        elif domain == "outlook.com":
-            return "imap-mail.outlook.com"
-        elif domain == "live.com":
-            return "imap-mail.outlook.com"
-        elif domain == "hotmail.com":
-            return "imap-mail.outlook.com"
-        elif domain == "icloud.com":
-            return "imap.mail.me.com"
-        elif domain == "aol.com":
-            return "imap.aol.com"
-        elif domain == "comcast.net":
-            return "imap.comcast.net"
-        elif domain == "verizon.net":
-            return "incoming.verizon.net"
-        elif domain == "att.net":
-            return "imap.mail.att.net"
-        raise ValueError(
-            f"Could not determine email server from email address {email_address}"
-        )
+        with open("resources/imap-domains.json", "r", encoding="utf8") as file:
+            domains = json.load(file)
+        return domains[email_address.split("@")[-1]]
 
     def __get_mailbox_name(
         self, email_server: str, mailbox_folder_list: list[str]

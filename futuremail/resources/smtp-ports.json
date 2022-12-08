@@ -1,0 +1,21 @@
+{
+    "mail.btinternet.com": 25,
+    "mail.btopenworld.com": 25,
+    "mail.o2online.de": 25,
+    "smtp.o2.co.uk": 25,
+    "smtp.o2.ie": 25,
+    "smtp.orange.co.uk": 25,
+    "smtp.orange.net": 25,
+    "smtp.wanadoo.co.uk": 25,
+    "mail.privateemail.com": 587,
+    "outgoing.yahoo.verizon.net": 587,
+    "securesmtp.t-online.de": 587,
+    "smtp.1and1.com": 587,
+    "smtp.1und1.de": 587,
+    "smtp.aol.com": 587,
+    "smtp.comcast.net": 587,
+    "smtp.mail.com": 587,
+    "smtp.mail.me.com": 587,
+    "smtp.office365.com": 587,
+    "smtpout.secureserver.net": 587
+}

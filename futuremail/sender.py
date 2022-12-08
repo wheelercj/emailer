@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import smtplib
 import ssl
 from email.message import EmailMessage
@@ -96,101 +97,14 @@ class Sender:
 
     def __get_email_server(self, email_address: str) -> str:
         """Attempts to get the correct email server from an email address."""
-        domain = email_address.split("@")[1]
-        if domain == "1and1.com":
-            return "smtp.1and1.com"
-        elif domain == "1und1.de":
-            return "smtp.1und1.de"
-        elif domain == "aol.com":
-            return "smtp.aol.com"
-        elif domain == "att.yahoo.com":
-            return "smtp.att.yahoo.com"
-        elif domain == "au.yahoo.com":
-            return "smtp.mail.yahoo.com.au"
-        elif domain == "btinternet.com":
-            return "mail.btinternet.com"
-        elif domain == "btopenworld.com":
-            return "mail.btopenworld.com"
-        elif domain == "comcast.net":
-            return "smtp.comcast.net"
-        elif domain == "csun.edu":
-            return "smtp.live.com"
-        elif domain == "gmail.com":
-            return "smtp.gmail.com"
-        elif domain == "gmx.com":
-            return "smtp.gmx.com"
-        elif domain == "icloud.com":
-            return "smtp.mail.me.com"
-        elif domain == "laccd.edu":
-            return "smtp.live.com"
-        elif domain == "lavc.edu":
-            return "smtp.live.com"
-        elif domain == "live.com":
-            return "smtp.live.com"
-        elif domain == "mail.com":
-            return "smtp.mail.com"
-        elif domain == "my.csun.edu":
-            return "smtp.gmail.com"
-        elif domain == "ntlworld.com":
-            return "smtp.ntlworld.com"
-        elif domain == "o2.co.uk":
-            return "o2.co.uk"
-        elif domain == "o2.ie":
-            return "smtp.o2.ie"
-        elif domain == "o2online.de":
-            return "mail.o2online.de"
-        elif domain == "office365.com":
-            return "smtp.office365.com"
-        elif domain == "orange.net":
-            return "smtp.orange.net"
-        elif domain == "outlook.com":
-            return "smtp.live.com"
-        elif domain == "postoffice.net":
-            return "smtp.postoffice.net"
-        elif domain == "privateemail.com":
-            return "mail.privateemail.com"
-        elif domain == "secureserver.net":
-            return "smtpout.secureserver.net"
-        elif domain == "student.laccd.edu":
-            return "smtp.live.com"
-        elif domain == "t-online.de":
-            return "t-online.de"
-        elif domain == "verizon.net":
-            return "outgoing.verizon.net"
-        elif domain == "yahoo.co.uk":
-            return "smtp.mail.yahoo.co.uk"
-        elif domain == "yahoo.com":
-            return "smtp.mail.yahoo.com"
-        elif domain == "zoho.com":
-            return "smtp.zoho.com"
-        else:
-            raise ValueError(f"Could not determine email server from {email_address}.")
+        with open("resources/smtp-domains.json", "r", encoding="utf8") as file:
+            domains = json.load(file)
+        return domains[email_address.split("@")[1]]
 
     def __get_email_port(self, email_server: str) -> int:
         """Attempts to get the correct email port from an email server."""
-        if email_server in (
-            "mail.btinternet.com",
-            "mail.btopenworld.com",
-            "mail.o2online.de",
-            "smtp.o2.co.uk",
-            "smtp.o2.ie",
-            "smtp.orange.co.uk",
-            "smtp.orange.net",
-            "smtp.wanadoo.co.uk",
-        ):
-            return 25
-        if email_server in (
-            "mail.privateemail.com",
-            "outgoing.yahoo.verizon.net",
-            "securesmtp.t-online.de",
-            "smtp.1and1.com",
-            "smtp.1und1.de",
-            "smtp.aol.com",
-            "smtp.comcast.net",
-            "smtp.mail.com",
-            "smtp.mail.me.com",
-            "smtp.office365.com",
-            "smtpout.secureserver.net",
-        ):
-            return 587
+        with open("resources/smtp-ports.json", "r", encoding="utf8") as file:
+            server_ports = json.load(file)
+        if email_server in server_ports:
+            return server_ports[email_server]
         return 465

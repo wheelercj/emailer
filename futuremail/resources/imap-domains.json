@@ -1,0 +1,12 @@
+{
+    "gmail.com": "imap.gmail.com",
+    "yahoo.com": "imap.mail.yahoo.com",
+    "outlook.com": "imap-mail.outlook.com",
+    "live.com": "imap-mail.outlook.com",
+    "hotmail.com": "imap-mail.outlook.com",
+    "icloud.com": "imap.mail.me.com",
+    "aol.com": "imap.aol.com",
+    "comcast.net": "imap.comcast.net",
+    "verizon.net": "incoming.verizon.net",
+    "att.net": "imap.mail.att.net"
+}
