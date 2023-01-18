@@ -3,6 +3,7 @@
 *.jpg
 *.pdf
 unique_strings.db
+venv311
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
